@@ -118,6 +118,8 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 [data-theme="dark"] .cat-trajtime{background:#450a0a;color:#fca5a5}
 [data-theme="dark"] .cat-ushqim{background:#022c22;color:#6ee7b7}
 [data-theme="dark"] .cat-mbreteresha{background:#2e1065;color:#d8b4fe}
+.cat-mjalti{background:#FEF3C7;color:#78350F}
+[data-theme="dark"] .cat-mjalti{background:#451a03;color:#fcd34d}
 .entry-date{font-size:13px;color:var(--text2);margin-left:auto;display:flex;align-items:center;gap:4px}
 .entry-date i{font-size:14px}
 .entry-text{font-size:14px;color:var(--text1);line-height:1.6}
@@ -233,6 +235,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="cat-tab" data-cat="trajtime" onclick="setCat(this,'trajtime')"><i class="ti ti-vaccine"></i>Trajtim</button>
         <button class="cat-tab" data-cat="ushqim" onclick="setCat(this,'ushqim')"><i class="ti ti-bowl-spoon"></i>Ushqim</button>
         <button class="cat-tab" data-cat="mbreteresha" onclick="setCat(this,'mbreteresha')"><i class="ti ti-crown"></i>Mbretëresha</button>
+        <button class="cat-tab" data-cat="mjalti" onclick="setCat(this,'mjalti')"><i class="ti ti-jar"></i>Depo & Mjalti</button>
       </div>
 
       <!-- Dynamic form fields by category -->
@@ -338,6 +341,115 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         </div>
       </div>
 
+      <div id="fields-mjalti" style="display:none">
+        <div class="field-row">
+          <div class="label">Data</div>
+          <input type="date" class="form-input" id="mjal-date">
+        </div>
+        <div class="field-row">
+          <div class="label">Veprimi</div>
+          <select class="form-input form-select" id="mjal-veprimi" onchange="updateMjaltiFields()">
+            <option value="">Zgjidh veprimin...</option>
+            <optgroup label="📦 Depo">
+              <option value="shto-depo">Vendos depo (shto korniza bosh)</option>
+              <option value="heq-depo">Hiq depo (largo korniza)</option>
+            </optgroup>
+            <optgroup label="🍯 Prodhim Mjalti">
+              <option value="mjelje">Mjelje — nxjerr mjaltin</option>
+              <option value="vleresim">Vlerësim rezervash</option>
+            </optgroup>
+          </select>
+        </div>
+        <div id="mjal-fields-shto-depo" style="display:none">
+          <div class="field-row">
+            <div class="label">Numri i depove të vendosura</div>
+            <input type="number" min="1" max="10" class="form-input" id="mjal-depo-nr" placeholder="1">
+          </div>
+          <div class="field-row">
+            <div class="label">Lloji i kornizave</div>
+            <select class="form-input form-select" id="mjal-depo-lloji">
+              <option value="">Zgjidh...</option>
+              <option>Korniza bosh — bletë t'i ndërtojnë</option>
+              <option>Korniza me bazë dylli</option>
+              <option>Korniza të ndërtuara (boshe)</option>
+              <option>Korniza gjysmë të mbushura</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="label">Shënime</div>
+            <textarea class="form-input note-input" id="mjal-depo-note" placeholder="Vëzhgime..." style="min-height:60px"></textarea>
+          </div>
+        </div>
+        <div id="mjal-fields-heq-depo" style="display:none">
+          <div class="field-row">
+            <div class="label">Numri i depove të hequra</div>
+            <input type="number" min="1" max="10" class="form-input" id="mjal-heq-nr" placeholder="1">
+          </div>
+          <div class="field-row">
+            <div class="label">Arsyeja</div>
+            <select class="form-input form-select" id="mjal-heq-arsye">
+              <option value="">Zgjidh...</option>
+              <option>Mjalti u nxor — depo e zbrazur</option>
+              <option>Stina mbaroi — përgatitje dimri</option>
+              <option>Kolonia e dobët</option>
+              <option>Tjetër</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="label">Shënime</div>
+            <textarea class="form-input note-input" id="mjal-heq-note" placeholder="Vëzhgime..." style="min-height:60px"></textarea>
+          </div>
+        </div>
+        <div id="mjal-fields-mjelje" style="display:none">
+          <div class="field-row">
+            <div class="label">Sasia e mjaltit (kg)</div>
+            <input type="number" step="0.1" min="0" class="form-input" id="mjal-sasia" placeholder="0.0">
+          </div>
+          <div class="field-row">
+            <div class="label">Lloji i mjaltit</div>
+            <select class="form-input form-select" id="mjal-lloji">
+              <option value="">Zgjidh...</option>
+              <option>Lule të egra (poliflorë)</option>
+              <option>Akacje</option>
+              <option>Gështenjë</option>
+              <option>Bimë malore</option>
+              <option>Luledele</option>
+              <option>Dredhëza</option>
+              <option>Tjetër</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="label">Lagështira % (opsionale)</div>
+            <input type="number" step="0.1" min="14" max="22" class="form-input" id="mjal-lagest" placeholder="p.sh. 18.5">
+          </div>
+          <div class="field-row">
+            <div class="label">Shënime</div>
+            <textarea class="form-input note-input" id="mjal-note" placeholder="Cilësia, ngjyra, era..." style="min-height:60px"></textarea>
+          </div>
+        </div>
+        <div id="mjal-fields-vleresim" style="display:none">
+          <div class="field-row">
+            <div class="label">Rezerva e vlerësuar (kg)</div>
+            <input type="number" step="0.5" min="0" class="form-input" id="mjal-rezerva" placeholder="0.0">
+          </div>
+          <div class="field-row">
+            <div class="label">Gjendje rezervash</div>
+            <select class="form-input form-select" id="mjal-gjendje-rez">
+              <option value="">Zgjidh...</option>
+              <option>Shumë mirë — tepricë e madhe</option>
+              <option>Mirë — rezerva të mjaftueshme</option>
+              <option>Mesatare — nevojitet monitorim</option>
+              <option>Pak — rrezik uria dimrit</option>
+              <option>Kritike — duhet ushqyer menjëherë</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="label">Shënime</div>
+            <textarea class="form-input note-input" id="mjal-vler-note" placeholder="Vëzhgime..." style="min-height:60px"></textarea>
+          </div>
+        </div>
+      </div>
+
       <button class="btn-save" id="save-btn" onclick="saveEntry()" disabled>
         <i class="ti ti-device-floppy"></i> Ruaj shënimin
       </button>
@@ -365,6 +477,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div class="stat-card"><div class="stat-num" id="st-hives">0</div><div class="stat-label">Koshere aktive</div></div>
       <div class="stat-card"><div class="stat-num" id="st-traj">0</div><div class="stat-label">Trajtime</div></div>
       <div class="stat-card"><div class="stat-num" id="st-queen">0</div><div class="stat-label">Mbretëresha</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-mjalti" style="font-size:20px">0 kg</div><div class="stat-label">Mjalti i mjelur</div></div>
     </div>
     <div class="label">Koshere me më shumë aktivitet</div>
     <div id="stat-list"></div>
@@ -449,6 +562,7 @@ const CAT_META={
   trajtime:{label:'Trajtim',icon:'ti-vaccine',badge:'cat-trajtime'},
   ushqim:{label:'Ushqim',icon:'ti-bowl-spoon',badge:'cat-ushqim'},
   mbreteresha:{label:'Mbretëresha',icon:'ti-crown',badge:'cat-mbreteresha'},
+  mjalti:{label:'Depo & Mjalti',icon:'ti-jar',badge:'cat-mjalti'},
 };
 
 // ─── PERSISTENCE ─────────────────────────────────────────
@@ -502,7 +616,7 @@ function selectAdd(n){
   document.getElementById('form-add').style.display='block';
   document.getElementById('sel-lbl-add').textContent=n;
   const today=new Date().toISOString().split('T')[0];
-  ['add-date','traj-date','ush-date','mbre-date'].forEach(id=>{
+  ['add-date','traj-date','ush-date','mbre-date','mjal-date'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value=today;
   });
   checkBtn();
@@ -519,9 +633,10 @@ function setCat(btn,cat){
   currentCat=cat;
   document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['shenime','trajtime','ushqim','mbreteresha'].forEach(c=>{
+  ['shenime','trajtime','ushqim','mbreteresha','mjalti'].forEach(c=>{
     document.getElementById('fields-'+c).style.display=c===cat?'block':'none';
   });
+  if(cat!=='mjalti'){document.getElementById('mjal-veprimi').value='';updateMjaltiFields();}
   checkBtn();
 }
 
@@ -532,13 +647,23 @@ function checkBtn(){
     else if(currentCat==='trajtime')ok=document.getElementById('traj-date').value&&document.getElementById('traj-type').value;
     else if(currentCat==='ushqim')ok=document.getElementById('ush-date').value&&document.getElementById('ush-type').value;
     else if(currentCat==='mbreteresha')ok=document.getElementById('mbre-date').value&&document.getElementById('mbre-gjendje').value;
+    else if(currentCat==='mjalti')ok=document.getElementById('mjal-date').value&&document.getElementById('mjal-veprimi').value;
   }
   document.getElementById('save-btn').disabled=!ok;
 }
-['add-date','add-note','traj-date','traj-type','traj-doza','ush-date','ush-type','ush-sasia','mbre-date','mbre-gjendje'].forEach(id=>{
+['add-date','add-note','traj-date','traj-type','traj-doza','ush-date','ush-type','ush-sasia','mbre-date','mbre-gjendje','mjal-date','mjal-veprimi'].forEach(id=>{
   const el=document.getElementById(id);
   if(el)el.addEventListener('input',checkBtn);
 });
+
+function updateMjaltiFields(){
+  const vep=document.getElementById('mjal-veprimi').value;
+  ['shto-depo','heq-depo','mjelje','vleresim'].forEach(v=>{
+    const el=document.getElementById('mjal-fields-'+v);
+    if(el)el.style.display=v===vep?'block':'none';
+  });
+  checkBtn();
+}
 
 function saveEntry(){
   const n=selA;if(!n)return;
@@ -563,6 +688,15 @@ function saveEntry(){
     if(!d||!gj)return;
     entry={...entry,date:d,viti:document.getElementById('mbre-viti').value,raca:document.getElementById('mbre-raca').value,gjendje:gj,note:document.getElementById('mbre-note').value.trim()};
     document.getElementById('mbre-note').value='';document.getElementById('mbre-gjendje').value='';
+  } else if(currentCat==='mjalti'){
+    const d=document.getElementById('mjal-date').value,vep=document.getElementById('mjal-veprimi').value;
+    if(!d||!vep)return;
+    entry={...entry,date:d,veprimi:vep};
+    if(vep==='shto-depo'){entry.depNr=document.getElementById('mjal-depo-nr').value;entry.depLloji=document.getElementById('mjal-depo-lloji').value;entry.note=document.getElementById('mjal-depo-note').value.trim();document.getElementById('mjal-depo-note').value='';document.getElementById('mjal-depo-lloji').value='';}
+    else if(vep==='heq-depo'){entry.heqNr=document.getElementById('mjal-heq-nr').value;entry.heqArsye=document.getElementById('mjal-heq-arsye').value;entry.note=document.getElementById('mjal-heq-note').value.trim();document.getElementById('mjal-heq-note').value='';document.getElementById('mjal-heq-arsye').value='';}
+    else if(vep==='mjelje'){entry.sasia=document.getElementById('mjal-sasia').value;entry.lloji=document.getElementById('mjal-lloji').value;entry.lagest=document.getElementById('mjal-lagest').value;entry.note=document.getElementById('mjal-note').value.trim();document.getElementById('mjal-sasia').value='';document.getElementById('mjal-lloji').value='';document.getElementById('mjal-lagest').value='';document.getElementById('mjal-note').value='';}
+    else if(vep==='vleresim'){entry.rezerva=document.getElementById('mjal-rezerva').value;entry.gjendje=document.getElementById('mjal-gjendje-rez').value;entry.note=document.getElementById('mjal-vler-note').value.trim();document.getElementById('mjal-rezerva').value='';document.getElementById('mjal-gjendje-rez').value='';document.getElementById('mjal-vler-note').value='';}
+    document.getElementById('mjal-veprimi').value='';updateMjaltiFields();
   }
   if(!db[n])db[n]=[];
   db[n].push(entry);
@@ -606,6 +740,15 @@ function renderView(n){
       if(e.cat==='trajtime')content=`<strong>${e.type}</strong>${e.doza?' · '+e.doza:''}${e.note?'<br><span style="color:var(--text2)">'+esc(e.note)+'</span>':''}`;
       else if(e.cat==='ushqim')content=`<strong>${e.type}</strong>${e.sasia?' · '+e.sasia+' kg/l':''}${e.note?'<br><span style="color:var(--text2)">'+esc(e.note)+'</span>':''}`;
       else if(e.cat==='mbreteresha')content=`<strong>${e.gjendje}</strong>${e.raca?'<br>'+e.raca:''}${e.viti?' · '+e.viti:''}${e.note?'<br><span style="color:var(--text2)">'+esc(e.note)+'</span>':''}`;
+      else if(e.cat==='mjalti'){
+        const vLabels={'shto-depo':'Vendosur depo','heq-depo':'Hequr depo','mjelje':'Mjelje','vleresim':'Vlerësim rezervash'};
+        let det=`<strong>${vLabels[e.veprimi]||e.veprimi}</strong>`;
+        if(e.veprimi==='shto-depo')det+=`${e.depNr?' · '+e.depNr+' depo':''}${e.depLloji?'<br>'+esc(e.depLloji):''}`;
+        else if(e.veprimi==='heq-depo')det+=`${e.heqNr?' · '+e.heqNr+' depo':''}${e.heqArsye?'<br>'+esc(e.heqArsye):''}`;
+        else if(e.veprimi==='mjelje')det+=`${e.sasia?' · <strong style="color:var(--amber)">'+e.sasia+' kg</strong>':''}${e.lloji?'<br>'+esc(e.lloji):''}${e.lagest?' · Lagështira: '+e.lagest+'%':''}`;
+        else if(e.veprimi==='vleresim')det+=`${e.rezerva?' · '+e.rezerva+' kg':''} ${e.gjendje?'<br>'+esc(e.gjendje):''}`;
+        content=det+(e.note?'<br><span style="color:var(--text2)">'+esc(e.note)+'</span>':'');
+      }
       else content=esc(e.text||'').replace(/\n/g,'<br>');
       h+=`<div class="entry-card" data-cat="${e.cat||'shenime'}"><div class="entry-header"><span class="entry-cat-badge ${meta.badge}"><i class="ti ${meta.icon}"></i>${meta.label}</span><span class="entry-date"><i class="ti ti-calendar"></i>${d}/${m}/${y}</span><button class="btn-del" onclick="delEntry(${n},${e.id})"><i class="ti ti-trash"></i></button></div><div class="entry-text">${content}</div></div>`;
     });
@@ -636,10 +779,12 @@ function updateStats(){
   const active=all.filter(([,v])=>v&&v.length).length;
   const traj=all.reduce((a,[,v])=>a+(v?v.filter(e=>e.cat==='trajtime').length:0),0);
   const queen=all.reduce((a,[,v])=>a+(v?v.filter(e=>e.cat==='mbreteresha').length:0),0);
+  const mjaltiKg=all.reduce((a,[,v])=>a+(v?v.filter(e=>e.cat==='mjalti'&&e.veprimi==='mjelje'&&e.sasia).reduce((s,e)=>s+parseFloat(e.sasia||0),0):0),0);
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-hives').textContent=active;
   document.getElementById('st-traj').textContent=traj;
   document.getElementById('st-queen').textContent=queen;
+  const mjEl=document.getElementById('st-mjalti');if(mjEl)mjEl.textContent=mjaltiKg.toFixed(1)+' kg';
   document.getElementById('hdr-sub').textContent=`${active} koshere aktive`;
 
   const sorted=all.filter(([,v])=>v&&v.length).sort((a,b)=>b[1].length-a[1].length).slice(0,10);
@@ -678,6 +823,7 @@ function exportExcel(){
       if(e.cat==='trajtime'){det=`${e.type||''}${e.doza?' ('+e.doza+')':''}`;note=e.note||'';}
       else if(e.cat==='ushqim'){det=`${e.type||''}${e.sasia?' '+e.sasia+'kg/l':''}`;note=e.note||'';}
       else if(e.cat==='mbreteresha'){det=`${e.gjendje||''}${e.raca?' · '+e.raca:''}${e.viti?' · '+e.viti:''}`;note=e.note||'';}
+      else if(e.cat==='mjalti'){const vl={'shto-depo':'Vendosur depo','heq-depo':'Hequr depo','mjelje':'Mjelje','vleresim':'Vlerësim'};det=vl[e.veprimi]||e.veprimi;if(e.veprimi==='mjelje')det+=e.sasia?' '+e.sasia+'kg':'';if(e.veprimi==='shto-depo')det+=e.depNr?' ('+e.depNr+' depo)':'';note=e.note||'';}
       else{det=e.text||'';}
       rows.push([+n,cat,e.date,det,note]);
     });
@@ -699,76 +845,110 @@ function today(){return new Date().toISOString().split('T')[0];}
 function dlBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 
 // ─── GOOGLE DRIVE ─────────────────────────────────────────
-// Uses Google Identity Services (GIS) + Drive REST API
-const DRIVE_CLIENT_ID='22173525762-lhhg53jc5rrfaserpj0bvq4us5ienc5v.apps.googleusercontent.com'; // Set your Google OAuth Client ID here
+const DRIVE_CLIENT_ID='22173525762-lhhg53jc5rrfaserpj0bvq4us5ienc5v.apps.googleusercontent.com';
 const DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
 const DRIVE_FILE_NAME='bletaria_sync.json';
-let driveFolderId=null;
 
 function initDrive(){
-  if(!DRIVE_CLIENT_ID){
-    const status=document.getElementById('drive-status');
-    status.innerHTML=`<div class="drive-status drive-err"><i class="ti ti-alert-circle"></i>Konfiguro DRIVE_CLIENT_ID në kodin burimor. Udhëzime: <a href="https://console.cloud.google.com" target="_blank" style="color:inherit">console.cloud.google.com</a></div>`;
-    return;
-  }
-  // Load GIS script
   if(!window.google){
     const s=document.createElement('script');
     s.src='https://accounts.google.com/gsi/client';
     s.onload=doGoogleAuth;
+    s.onerror=()=>toast('Nuk u ngarkua Google SDK','ti-alert-circle',true);
     document.head.appendChild(s);
   } else doGoogleAuth();
 }
+
 function doGoogleAuth(){
-  driveTokenClient=google.accounts.oauth2.initTokenClient({
-    client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,
-    callback:(r)=>{
-      if(r.error){toast('Autentikimi dështoi','ti-alert-circle',true);return;}
-      driveAccessToken=r.access_token;
-      document.getElementById('drive-sync-card').style.display='block';
-      document.getElementById('drive-status').innerHTML='<div class="drive-status drive-ok"><i class="ti ti-check"></i>Lidhur me Google Drive</div>';
-      toast('Drive u lidh!','ti-brand-google-drive');
-    }
-  });
-  driveTokenClient.requestAccessToken();
+  try{
+    driveTokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:DRIVE_CLIENT_ID,
+      scope:DRIVE_SCOPE,
+      callback:(r)=>{
+        if(r.error){
+          toast('Autentikimi dështoi: '+r.error,'ti-alert-circle',true);
+          return;
+        }
+        driveAccessToken=r.access_token;
+        document.getElementById('drive-sync-card').style.display='block';
+        document.getElementById('drive-status').innerHTML='<div class="drive-status drive-ok"><i class="ti ti-check"></i>Lidhur me Google Drive ✓</div>';
+        toast('Drive u lidh!','ti-brand-google-drive');
+      }
+    });
+    driveTokenClient.requestAccessToken({prompt:'consent'});
+  }catch(e){
+    toast('Gabim: '+e.message,'ti-alert-circle',true);
+  }
 }
+
 async function driveUpload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
-  const el=document.getElementById('drive-sync-status');el.textContent='Duke ngarkuar...';
+  const el=document.getElementById('drive-sync-status');
+  el.textContent='Duke ngarkuar...';
   try{
     const content=JSON.stringify({version:2,exported:new Date().toISOString(),data:db});
-    // Check if file exists
-    const q=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive`,{headers:{Authorization:'Bearer '+driveAccessToken}});
+    // Search for existing file
+    const q=await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name%3D'${DRIVE_FILE_NAME}'%20and%20trashed%3Dfalse&spaces=drive&fields=files(id,name)`,
+      {headers:{Authorization:'Bearer '+driveAccessToken}}
+    );
     const qd=await q.json();
-    let fileId=qd.files&&qd.files[0]?.id;
+    const fileId=qd.files&&qd.files.length>0?qd.files[0].id:null;
+
     if(fileId){
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
+      // Update existing file content only
+      await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content}
+      );
     } else {
-      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:JSON.stringify({name:DRIVE_FILE_NAME,mimeType:'application/json'})});
-      // Simplified: just update metadata then content
-      const cr=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:JSON.stringify({name:DRIVE_FILE_NAME})});
-      const cd=await cr.json();fileId=cd.id;
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
+      // Create new file using multipart
+      const boundary='bletaria_boundary';
+      const meta=JSON.stringify({name:DRIVE_FILE_NAME,mimeType:'application/json'});
+      const body=`--${boundary}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
+      await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':`multipart/related; boundary=${boundary}`},body}
+      );
     }
-    el.textContent='✓ U ngarkua: '+new Date().toLocaleTimeString();
+    el.innerHTML='<span style="color:var(--green)">✓ U ngarkua: '+new Date().toLocaleTimeString()+'</span>';
     toast('Ngarkuar në Drive!','ti-cloud-upload');
-  }catch(e){el.textContent='Gabim: '+e.message;toast('Dështoi ngarkimi','ti-alert-circle',true);}
+  }catch(e){
+    el.textContent='Gabim: '+e.message;
+    toast('Dështoi ngarkimi','ti-alert-circle',true);
+  }
 }
+
 async function driveDownload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
-  const el=document.getElementById('drive-sync-status');el.textContent='Duke shkarkuar...';
+  const el=document.getElementById('drive-sync-status');
+  el.textContent='Duke shkarkuar...';
   try{
-    const q=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive`,{headers:{Authorization:'Bearer '+driveAccessToken}});
+    const q=await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name%3D'${DRIVE_FILE_NAME}'%20and%20trashed%3Dfalse&spaces=drive&fields=files(id,name)`,
+      {headers:{Authorization:'Bearer '+driveAccessToken}}
+    );
     const qd=await q.json();
-    if(!qd.files||!qd.files[0]){el.textContent='Nuk u gjet skedar në Drive.';return;}
+    if(!qd.files||qd.files.length===0){
+      el.textContent='Nuk u gjet skedar në Drive. Ngarko fillimisht.';
+      return;
+    }
     const fileId=qd.files[0].id;
-    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{Authorization:'Bearer '+driveAccessToken}});
-    let d=await r.json();if(d.data)d=d.data;
+    const r=await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      {headers:{Authorization:'Bearer '+driveAccessToken}}
+    );
+    let d=await r.json();
+    if(d.version&&d.data)d=d.data;
+    if(typeof d!=='object'||Array.isArray(d))throw new Error('Format i gabuar');
     db=d;persist();
     buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
-    el.textContent='✓ U shkarkua: '+new Date().toLocaleTimeString();
+    el.innerHTML='<span style="color:var(--green)">✓ U shkarkua: '+new Date().toLocaleTimeString()+'</span>';
     toast('Shkarkuar nga Drive!','ti-cloud-download');
-  }catch(e){el.textContent='Gabim: '+e.message;toast('Dështoi shkarkimi','ti-alert-circle',true);}
+  }catch(e){
+    el.textContent='Gabim: '+e.message;
+    toast('Dështoi shkarkimi','ti-alert-circle',true);
+  }
 }
 
 // ─── PWA ─────────────────────────────────────────────────
