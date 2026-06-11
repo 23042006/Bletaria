@@ -249,6 +249,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div class="grid-actions">
         <button class="btn-grid-action" onclick="openMultiModal()"><i class="ti ti-checkbox-multiple"></i>Shumë koshere</button>
         <button class="btn-grid-action" onclick="openHiveManager()"><i class="ti ti-settings"></i>Menaxho koshere</button>
+        <button class="btn-grid-action" id="btn-delete-mode" onclick="toggleDeleteMode()" style="color:#991B1B;border-color:#FECACA"><i class="ti ti-trash"></i>Hiq koshere</button>
       </div>
       <div class="search-wrap">
         <i class="ti ti-search search-icon"></i>
@@ -511,7 +512,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div class="stat-card"><div class="stat-num" id="st-hives">0</div><div class="stat-label">Koshere aktive</div></div>
       <div class="stat-card"><div class="stat-num" id="st-traj">0</div><div class="stat-label">Trajtime</div></div>
       <div class="stat-card"><div class="stat-num" id="st-queen">0</div><div class="stat-label">Mbretëresha</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-mjalti" style="font-size:20px">0 kg</div><div class="stat-label">Mjalti i vjelur</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-mjalti" style="font-size:20px">0 kg</div><div class="stat-label">Mjalti i mjelur</div></div>
     </div>
     <div class="label">Koshere me më shumë aktivitet</div>
     <div id="stat-list"></div>
@@ -720,14 +721,42 @@ function getHives(){
 function saveHives(arr){localStorage.setItem('bletaria_hives',JSON.stringify([...new Set(arr)].sort((a,b)=>a-b)));}
 
 // ─── GRID ────────────────────────────────────────────────
+let deleteMode=false;
+function toggleDeleteMode(){
+  deleteMode=!deleteMode;
+  const btn=document.getElementById('btn-delete-mode');
+  if(deleteMode){
+    btn.style.background='#FEE2E2';btn.style.borderColor='#DC2626';btn.style.color='#991B1B';
+    btn.innerHTML='<i class="ti ti-trash"></i>Anulo heqjen';
+    toast('Kliko kosheren per ta hequr','ti-trash',false);
+  } else {
+    btn.style.background='';btn.style.borderColor='#FECACA';btn.style.color='#991B1B';
+    btn.innerHTML='<i class="ti ti-trash"></i>Hiq koshere';
+  }
+  buildGrid('grid-add',selectAdd);
+}
 function buildGrid(id,onClick){
   const g=document.getElementById(id);g.innerHTML='';
   const hives=getHives();
+  const isAdd=id==='grid-add';
   hives.forEach(i=>{
     const b=document.createElement('button');
-    b.className='hex-btn';b.dataset.n=i;b.textContent=i;
-    if(db[i]&&db[i].length){b.classList.add('has-data');const d=document.createElement('span');d.className='dot';b.appendChild(d)}
-    b.onclick=()=>onClick(i);
+    b.className='hex-btn';b.dataset.n=i;
+    if(isAdd&&deleteMode){
+      b.innerHTML='<span style="font-size:11px;font-weight:700">'+i+'</span><i class="ti ti-trash" style="font-size:12px;color:#DC2626;position:absolute;bottom:4px;right:4px"></i>';
+      b.style.border='1.5px solid #FECACA';
+      b.onclick=(function(hiveN){return function(){
+        if(!confirm('Fshi kosheren '+hiveN+'?'+(db[hiveN]&&db[hiveN].length?' Do te fshihen edhe '+db[hiveN].length+' shenime!':'')))return;
+        const hv=getHives().filter(function(h){return h!==hiveN;});saveHives(hv);
+        if(db[hiveN])delete db[hiveN];persist();
+        buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
+        toast('Koshere '+hiveN+' u fshi.','ti-trash');
+      };})(i);
+    } else {
+      b.textContent=i;
+      if(db[i]&&db[i].length){b.classList.add('has-data');const d=document.createElement('span');d.className='dot';b.appendChild(d);}
+      b.onclick=(function(hiveN){return function(){onClick(hiveN);};})(i);
+    }
     g.appendChild(b);
   });
   document.getElementById('tot').textContent=totalCount();
