@@ -177,9 +177,37 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--bg1);border-radius:20px 20px 0 0;padding:20px 16px 30px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto}
+.modal{background:var(--bg1);border-radius:20px 20px 0 0;padding:20px 16px 30px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
 .modal-title{font-size:17px;font-weight:700;color:var(--text1);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
 .modal-close{background:none;border:none;font-size:22px;color:var(--text2);cursor:pointer;padding:2px}
+/* MULTI-HIVE */
+.multi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;max-height:220px;overflow-y:auto}
+.multi-btn{border:1.5px solid var(--border1);border-radius:8px;background:var(--bg2);font-size:12px;font-weight:600;cursor:pointer;color:var(--text1);height:42px;position:relative;font-family:inherit;transition:all 0.1s}
+.multi-btn.selected{background:var(--amber);border-color:#D97706;color:#fff}
+.multi-btn.has-data{border-color:var(--amber);color:var(--amber-dark)}
+[data-theme="dark"] .multi-btn.has-data{color:var(--amber)}
+.multi-btn.inactive{opacity:0.3;cursor:not-allowed;pointer-events:none}
+.sel-count{font-size:13px;color:var(--text2);margin-bottom:10px}
+.sel-count strong{color:var(--amber-dark)}
+[data-theme="dark"] .sel-count strong{color:var(--amber)}
+/* HIVE MANAGER */
+.hive-list{max-height:300px;overflow-y:auto;margin-bottom:12px}
+.hive-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border1);border-radius:10px;margin-bottom:6px;background:var(--bg2)}
+.hive-item-left{display:flex;align-items:center;gap:10px}
+.hive-num-badge{background:var(--amber);color:#fff;font-weight:700;font-size:13px;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.hive-item-info{font-size:13px;color:var(--text2)}
+.hive-item-info strong{color:var(--text1);font-size:14px;display:block}
+.btn-hive-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px}
+.btn-hive-del:active{color:var(--red)}
+.add-hive-row{display:flex;gap:8px;align-items:center}
+.add-hive-input{flex:1;border:1.5px solid var(--border1);border-radius:9px;padding:10px 12px;font-size:15px;background:var(--bg1);color:var(--text1);font-family:inherit}
+.add-hive-input:focus{outline:none;border-color:var(--amber)}
+.btn-add-hive{background:var(--amber);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+/* quick-action bar above grid */
+.grid-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.btn-grid-action{display:inline-flex;align-items:center;gap:5px;padding:8px 13px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--border1);background:var(--bg2);color:var(--text1);font-family:inherit;transition:all 0.15s}
+.btn-grid-action:active{background:var(--amber);color:#fff;border-color:var(--amber)}
+.btn-grid-action i{font-size:15px}
 </style>
 </head>
 <body>
@@ -218,6 +246,10 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   <div id="screen-shto" class="screen active">
     <div id="grid-wrap-add">
       <div class="label">Kërko ose zgjidh kosheren</div>
+      <div class="grid-actions">
+        <button class="btn-grid-action" onclick="openMultiModal()"><i class="ti ti-checkbox-multiple"></i>Shumë koshere</button>
+        <button class="btn-grid-action" onclick="openHiveManager()"><i class="ti ti-settings"></i>Menaxho koshere</button>
+      </div>
       <div class="search-wrap">
         <i class="ti ti-search search-icon"></i>
         <input type="text" class="search-input form-input" id="search-add" placeholder="Numri i kosheres..." oninput="filterGrid('grid-add',this.value)">
@@ -550,6 +582,99 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   </div>
 </div>
 
+<!-- MODAL: MULTI-HIVE ENTRY -->
+<div class="modal-overlay" id="modal-multi">
+  <div class="modal">
+    <div class="modal-title">
+      <span><i class="ti ti-checkbox-multiple" style="color:var(--amber);margin-right:6px"></i>Shënim për shumë koshere</span>
+      <button class="modal-close" onclick="closeModal('modal-multi')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="label">Zgjidh koshere (kliko për të zgjedhur/çzgjedhur)</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <button class="btn-grid-action" style="padding:6px 10px;font-size:12px" onclick="multiSelectAll()"><i class="ti ti-select-all"></i>Të gjitha</button>
+      <button class="btn-grid-action" style="padding:6px 10px;font-size:12px" onclick="multiSelectNone()"><i class="ti ti-deselect"></i>Asnjë</button>
+      <button class="btn-grid-action" style="padding:6px 10px;font-size:12px" onclick="multiSelectActive()"><i class="ti ti-star"></i>Me shënime</button>
+    </div>
+    <div class="sel-count">Zgjedhur: <strong id="multi-sel-count">0</strong> koshere</div>
+    <div class="multi-grid" id="multi-grid"></div>
+
+    <div class="label" style="margin-top:4px">Kategoria</div>
+    <div class="cat-tabs" id="multi-cat-tabs" style="margin-bottom:14px">
+      <button class="cat-tab active" data-cat="shenime" onclick="setMultiCat(this,'shenime')"><i class="ti ti-notes"></i>Shënim</button>
+      <button class="cat-tab" data-cat="trajtime" onclick="setMultiCat(this,'trajtime')"><i class="ti ti-vaccine"></i>Trajtim</button>
+      <button class="cat-tab" data-cat="ushqim" onclick="setMultiCat(this,'ushqim')"><i class="ti ti-bowl-spoon"></i>Ushqim</button>
+      <button class="cat-tab" data-cat="mjalti" onclick="setMultiCat(this,'mjalti')"><i class="ti ti-jar"></i>Depo & Mjalti</button>
+    </div>
+
+    <!-- shenime -->
+    <div id="mf-shenime">
+      <div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="mf-date"></div>
+      <div class="field-row"><div class="label">Shënimi</div><textarea class="form-input note-input" id="mf-note" placeholder="Shkruaj shënimin..."></textarea></div>
+    </div>
+    <!-- trajtime -->
+    <div id="mf-trajtime" style="display:none">
+      <div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="mf-traj-date"></div>
+      <div class="field-row"><div class="label">Lloji</div>
+        <select class="form-input form-select" id="mf-traj-type">
+          <option value="">Zgjidh...</option>
+          <option>Oksalik acid</option><option>Apivar</option><option>Apistan</option><option>Makulan</option><option>Thymovar</option><option>Tjetër</option>
+        </select>
+      </div>
+      <div class="field-row"><div class="label">Doza</div><input type="text" class="form-input" id="mf-traj-doza" placeholder="p.sh. 5ml"></div>
+      <div class="field-row"><div class="label">Shënime</div><textarea class="form-input" id="mf-traj-note" placeholder="Vëzhgime..." style="min-height:60px;resize:vertical"></textarea></div>
+    </div>
+    <!-- ushqim -->
+    <div id="mf-ushqim" style="display:none">
+      <div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="mf-ush-date"></div>
+      <div class="field-row"><div class="label">Lloji</div>
+        <select class="form-input form-select" id="mf-ush-type">
+          <option value="">Zgjidh...</option>
+          <option>Shurup sheqeri 1:1</option><option>Shurup sheqeri 2:1</option><option>Kek proteine</option><option>Polen artificial</option><option>Kandis</option><option>Tjetër</option>
+        </select>
+      </div>
+      <div class="field-row"><div class="label">Sasia (kg/l)</div><input type="number" step="0.1" class="form-input" id="mf-ush-sasia" placeholder="0.0"></div>
+      <div class="field-row"><div class="label">Shënime</div><textarea class="form-input" id="mf-ush-note" placeholder="Vëzhgime..." style="min-height:60px;resize:vertical"></textarea></div>
+    </div>
+    <!-- mjalti -->
+    <div id="mf-mjalti" style="display:none">
+      <div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="mf-mjal-date"></div>
+      <div class="field-row"><div class="label">Veprimi</div>
+        <select class="form-input form-select" id="mf-mjal-veprimi">
+          <option value="">Zgjidh...</option>
+          <optgroup label="📦 Depo"><option value="shto-depo">Vendos depo</option><option value="heq-depo">Hiq depo</option></optgroup>
+          <optgroup label="🍯 Mjalti"><option value="mjelje">Mjelje</option><option value="vleresim">Vlerësim rezervash</option></optgroup>
+        </select>
+      </div>
+      <div class="field-row"><div class="label">Detaje / Sasia</div><input type="text" class="form-input" id="mf-mjal-det" placeholder="p.sh. 3 kg, 2 depo..."></div>
+      <div class="field-row"><div class="label">Shënime</div><textarea class="form-input" id="mf-mjal-note" placeholder="Vëzhgime..." style="min-height:60px;resize:vertical"></textarea></div>
+    </div>
+
+    <button class="btn-save" id="multi-save-btn" onclick="saveMultiEntry()" disabled style="position:static;margin-top:8px">
+      <i class="ti ti-device-floppy"></i> Ruaj për <span id="multi-save-lbl">0</span> koshere
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: HIVE MANAGER -->
+<div class="modal-overlay" id="modal-hives">
+  <div class="modal">
+    <div class="modal-title">
+      <span><i class="ti ti-settings" style="color:var(--amber);margin-right:6px"></i>Menaxho koshere</span>
+      <button class="modal-close" onclick="closeModal('modal-hives')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="label">Shto koshere të re</div>
+    <div class="add-hive-row" style="margin-bottom:16px">
+      <input type="number" class="add-hive-input" id="new-hive-from" placeholder="Nga nr..." min="1" max="999">
+      <span style="color:var(--text2);font-size:13px">deri</span>
+      <input type="number" class="add-hive-input" id="new-hive-to" placeholder="Deri nr..." min="1" max="999">
+      <button class="btn-add-hive" onclick="addHiveRange()"><i class="ti ti-plus"></i>Shto</button>
+    </div>
+    <div class="label">Koshere aktuale (<span id="hive-total-lbl">0</span>)</div>
+    <div class="hive-list" id="hive-list"></div>
+    <div id="hive-empty" class="empty" style="display:none"><i class="ti ti-hexagon-off"></i>Nuk ka koshere të shtuara</div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><i class="ti ti-check" id="toast-icon"></i><span id="toast-msg"></span></div>
 
@@ -586,24 +711,172 @@ function toggleTheme(){
   document.getElementById('theme-icon').className=next==='dark'?'ti ti-sun':'ti ti-moon-stars';
 }
 
+// ─── HIVES CONFIG ────────────────────────────────────────
+function getHives(){
+  try{const h=localStorage.getItem('bletaria_hives');if(h)return JSON.parse(h);}catch(e){}
+  // default: 1-100
+  return Array.from({length:100},(_,i)=>i+1);
+}
+function saveHives(arr){localStorage.setItem('bletaria_hives',JSON.stringify([...new Set(arr)].sort((a,b)=>a-b)));}
+
 // ─── GRID ────────────────────────────────────────────────
 function buildGrid(id,onClick){
   const g=document.getElementById(id);g.innerHTML='';
-  for(let i=1;i<=100;i++){
+  const hives=getHives();
+  hives.forEach(i=>{
     const b=document.createElement('button');
     b.className='hex-btn';b.dataset.n=i;b.textContent=i;
     if(db[i]&&db[i].length){b.classList.add('has-data');const d=document.createElement('span');d.className='dot';b.appendChild(d)}
     b.onclick=()=>onClick(i);
     g.appendChild(b);
-  }
+  });
   document.getElementById('tot').textContent=totalCount();
+  document.getElementById('hdr-sub').textContent=hives.length+' koshere';
 }
+
+// ─── HIVE MANAGER ────────────────────────────────────────
+function openHiveManager(){
+  renderHiveList();
+  document.getElementById('modal-hives').classList.add('open');
+}
+function renderHiveList(){
+  const hives=getHives();
+  document.getElementById('hive-total-lbl').textContent=hives.length;
+  const list=document.getElementById('hive-list');
+  const empty=document.getElementById('hive-empty');
+  if(!hives.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=hives.map(n=>{
+    const cnt=(db[n]&&db[n].length)||0;
+    return `<div class="hive-item"><div class="hive-item-left"><div class="hive-num-badge">${n}</div><div class="hive-item-info"><strong>Koshere ${n}</strong>${cnt?cnt+' shënime':'Pa shënime'}</div></div><button class="btn-hive-del" onclick="deleteHive(${n})" title="Fshi kosheren ${n}"><i class="ti ti-trash"></i></button></div>`;
+  }).join('');
+}
+function addHiveRange(){
+  const from=parseInt(document.getElementById('new-hive-from').value);
+  const to=parseInt(document.getElementById('new-hive-to').value)||from;
+  if(isNaN(from)||from<1){toast('Vendos numër valid','ti-alert-circle',true);return;}
+  const hives=getHives();
+  let added=0;
+  for(let i=Math.min(from,to);i<=Math.max(from,to);i++){
+    if(!hives.includes(i)){hives.push(i);added++;}
+  }
+  if(!added){toast('Koshere ekzistojnë tashmë','ti-alert-circle',true);return;}
+  saveHives(hives);
+  document.getElementById('new-hive-from').value='';
+  document.getElementById('new-hive-to').value='';
+  renderHiveList();
+  buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);
+  toast(`U shtuan ${added} koshere!`,'ti-check');
+}
+function deleteHive(n){
+  if(!confirm(`Fshi kosheren ${n}?${db[n]&&db[n].length?' Do të fshihen edhe '+db[n].length+' shënime!':''}`))return;
+  const hives=getHives().filter(h=>h!==n);
+  saveHives(hives);
+  if(db[n])delete db[n];persist();
+  renderHiveList();
+  buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
+  toast(`Koshere ${n} u fshi.`,'ti-trash');
+}
+
+// ─── MULTI-HIVE ───────────────────────────────────────────
+let multiCat='shenime', multiSelected=new Set();
+
+function openMultiModal(){
+  multiSelected=new Set();
+  multiCat='shenime';
+  const today=new Date().toISOString().split('T')[0];
+  ['mf-date','mf-traj-date','mf-ush-date','mf-mjal-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
+  buildMultiGrid();
+  // reset cat tabs
+  document.querySelectorAll('#multi-cat-tabs .cat-tab').forEach(b=>b.classList.toggle('active',b.dataset.cat==='shenime'));
+  ['shenime','trajtime','ushqim','mjalti'].forEach(c=>document.getElementById('mf-'+c).style.display=c==='shenime'?'block':'none');
+  updateMultiSaveBtn();
+  document.getElementById('modal-multi').classList.add('open');
+}
+function buildMultiGrid(){
+  const g=document.getElementById('multi-grid');g.innerHTML='';
+  getHives().forEach(i=>{
+    const b=document.createElement('button');
+    b.className='multi-btn'+(multiSelected.has(i)?' selected':'')+(db[i]&&db[i].length?' has-data':'');
+    b.dataset.n=i;b.textContent=i;
+    b.onclick=()=>toggleMulti(i,b);
+    g.appendChild(b);
+  });
+  document.getElementById('multi-sel-count').textContent=multiSelected.size;
+}
+function toggleMulti(n,btn){
+  if(multiSelected.has(n)){multiSelected.delete(n);btn.classList.remove('selected');}
+  else{multiSelected.add(n);btn.classList.add('selected');}
+  document.getElementById('multi-sel-count').textContent=multiSelected.size;
+  updateMultiSaveBtn();
+}
+function multiSelectAll(){multiSelected=new Set(getHives());buildMultiGrid();updateMultiSaveBtn();}
+function multiSelectNone(){multiSelected=new Set();buildMultiGrid();updateMultiSaveBtn();}
+function multiSelectActive(){multiSelected=new Set(getHives().filter(n=>db[n]&&db[n].length));buildMultiGrid();updateMultiSaveBtn();}
+function setMultiCat(btn,cat){
+  multiCat=cat;
+  document.querySelectorAll('#multi-cat-tabs .cat-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['shenime','trajtime','ushqim','mjalti'].forEach(c=>document.getElementById('mf-'+c).style.display=c===cat?'block':'none');
+  updateMultiSaveBtn();
+}
+function updateMultiSaveBtn(){
+  const n=multiSelected.size;
+  document.getElementById('multi-save-btn').disabled=n===0;
+  document.getElementById('multi-save-lbl').textContent=n;
+}
+function saveMultiEntry(){
+  if(!multiSelected.size)return;
+  const today=new Date().toISOString().split('T')[0];
+  let saved=0;
+  multiSelected.forEach(n=>{
+    let entry={id:Date.now()+Math.random(),cat:multiCat};
+    if(multiCat==='shenime'){
+      const d=document.getElementById('mf-date').value||today;
+      const t=document.getElementById('mf-note').value.trim();
+      if(!t)return;
+      entry={...entry,date:d,text:t};
+    } else if(multiCat==='trajtime'){
+      const d=document.getElementById('mf-traj-date').value||today;
+      const tp=document.getElementById('mf-traj-type').value;
+      if(!tp)return;
+      entry={...entry,date:d,type:tp,doza:document.getElementById('mf-traj-doza').value,note:document.getElementById('mf-traj-note').value.trim()};
+    } else if(multiCat==='ushqim'){
+      const d=document.getElementById('mf-ush-date').value||today;
+      const tp=document.getElementById('mf-ush-type').value;
+      if(!tp)return;
+      entry={...entry,date:d,type:tp,sasia:document.getElementById('mf-ush-sasia').value,note:document.getElementById('mf-ush-note').value.trim()};
+    } else if(multiCat==='mjalti'){
+      const d=document.getElementById('mf-mjal-date').value||today;
+      const vep=document.getElementById('mf-mjal-veprimi').value;
+      if(!vep)return;
+      const det=document.getElementById('mf-mjal-det').value;
+      entry={...entry,date:d,veprimi:vep,note:document.getElementById('mf-mjal-note').value.trim()};
+      if(det){if(vep==='mjelje')entry.sasia=det;else if(vep==='shto-depo'||vep==='heq-depo')entry.depNr=det;}
+    }
+    if(!db[n])db[n]=[];
+    db[n].push(entry);
+    db[n].sort((a,b)=>a.date.localeCompare(b.date));
+    saved++;
+  });
+  persist();
+  buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
+  closeModal('modal-multi');
+  toast(`Shënimi u ruajt për ${saved} koshere!`,'ti-check');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
 
 function filterGrid(gridId,val){
   const clrId=gridId==='grid-add'?'clr-add':'clr-view';
-  document.getElementById(clrId).style.display=val?'block':'none';
+  const clrEl=document.getElementById(clrId);
+  if(clrEl)clrEl.style.display=val?'block':'none';
   document.querySelectorAll(`#${gridId} .hex-btn`).forEach(b=>{
-    b.classList.toggle('hidden-cell',val&&!b.dataset.n.startsWith(val));
+    b.classList.toggle('hidden-cell',val&&!String(b.dataset.n).startsWith(val));
   });
 }
 function clearSearch(inputId,gridId){
@@ -787,7 +1060,7 @@ function updateStats(){
   document.getElementById('st-traj').textContent=traj;
   document.getElementById('st-queen').textContent=queen;
   const mjEl=document.getElementById('st-mjalti');if(mjEl)mjEl.textContent=mjaltiKg.toFixed(1)+' kg';
-  document.getElementById('hdr-sub').textContent=`${active} koshere aktive`;
+  // hdr-sub is set by buildGrid
 
   const sorted=all.filter(([,v])=>v&&v.length).sort((a,b)=>b[1].length-a[1].length).slice(0,10);
   const max=sorted[0]?sorted[0][1].length:1;
