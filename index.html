@@ -688,6 +688,30 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   </div>
 </div>
 
+<!-- MODAL: TOKEN SETUP -->
+<div class="modal-overlay" id="modal-token">
+  <div class="modal">
+    <div class="modal-title">
+      <span><i class="ti ti-brand-github" style="color:var(--amber);margin-right:6px"></i>Vendos GitHub Token</span>
+    </div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      Për sinkronizim midis pajisjeve duhet një GitHub Personal Access Token me leje <strong>gist</strong>.<br><br>
+      Krijohet te: <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong>
+    </p>
+    <div class="field-row">
+      <div class="label">GitHub Token</div>
+      <div style="position:relative">
+        <input type="password" class="form-input" id="modal-token-input" placeholder="ghp_..." style="padding-right:44px">
+        <button onclick="toggleModalTokenVis()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px"><i class="ti ti-eye" id="modal-tok-eye"></i></button>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:4px">
+      <button class="btn-action btn-primary" onclick="saveModalToken()" style="flex:1;justify-content:center"><i class="ti ti-device-floppy"></i>Ruaj token-in</button>
+      <button class="btn-action btn-secondary" onclick="closeModal('modal-token')"><i class="ti ti-x"></i>Tani jo</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><i class="ti ti-check" id="toast-icon"></i><span id="toast-msg"></span></div>
 
@@ -1166,8 +1190,22 @@ function dlBlob(blob,name){const a=document.createElement('a');a.href=URL.create
 
 // ─── GITHUB GIST SYNC ────────────────────────────────────
 const GIST_FILENAME='bletaria_data.json';
-// Pre-configure token (set once, stored in localStorage)
-(function(){if(!localStorage.getItem('gist_token'))localStorage.setItem('gist_token','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');})();
+
+function toggleModalTokenVis(){
+  const inp=document.getElementById('modal-token-input');
+  const eye=document.getElementById('modal-tok-eye');
+  if(inp.type==='password'){inp.type='text';eye.className='ti ti-eye-off';}
+  else{inp.type='password';eye.className='ti ti-eye';}
+}
+function saveModalToken(){
+  const tok=document.getElementById('modal-token-input').value.trim();
+  if(!tok){toast('Vendos tokenin!','ti-alert-circle',true);return;}
+  localStorage.setItem('gist_token',tok);
+  document.getElementById('gist-token-input').value=tok;
+  closeModal('modal-token');
+  toast('Token u ruajt!','ti-check');
+  gistCheckStatus();
+}
 
 function getGistToken(){return localStorage.getItem('gist_token')||'';}
 function getGistId(){return localStorage.getItem('gist_id')||'';}
@@ -1320,7 +1358,13 @@ setTimeout(()=>{
 setTimeout(()=>{
   document.getElementById('splash').classList.add('hide');
   document.getElementById('app').style.display='flex';
-  setTimeout(()=>document.getElementById('splash').remove(),600);
+  setTimeout(()=>{
+    document.getElementById('splash').remove();
+    // Prompt for token if not set
+    if(!getGistToken()){
+      document.getElementById('modal-token').classList.add('open');
+    }
+  },600);
 },1200);
 
 // Service Worker for PWA
