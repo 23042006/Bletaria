@@ -125,8 +125,10 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .entry-date{font-size:13px;color:var(--text2);margin-left:auto;display:flex;align-items:center;gap:4px}
 .entry-date i{font-size:14px}
 .entry-text{font-size:14px;color:var(--text1);line-height:1.6}
-.btn-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:3px;font-size:17px;line-height:1}
-.btn-del:active{color:var(--red)}
+.btn-del{background:var(--bg3);border:1px solid var(--border1);color:var(--text2);cursor:pointer;padding:5px 8px;font-size:16px;line-height:1;border-radius:6px}
+.btn-del:active{opacity:0.7}
+.btn-del-edit{color:var(--amber)!important;border-color:var(--amber)!important}
+.btn-del-del{color:var(--red)!important;border-color:#FECACA!important}
 .empty{text-align:center;padding:40px 16px;color:var(--text2)}
 .empty i{font-size:44px;display:block;margin:0 auto 12px;color:var(--border2)}
 
@@ -352,9 +354,9 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
           <div class="label">Raca</div>
           <select class="form-input form-select" id="mbre-raca">
             <option value="">Zgjidh...</option>
-            <option>E kuqe e paster</option>
-            <option>E kuqe me te zezë</option>
+            <option>E kuqe</option>
             <option>E zezë</option>
+            <option>E kuqe e errët</option>
             <option>Hibride</option>
             <option>E panjohur</option>
           </select>
@@ -685,6 +687,22 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
     <div class="label">Koshere aktuale (<span id="hive-total-lbl">0</span>)</div>
     <div class="hive-list" id="hive-list"></div>
     <div id="hive-empty" class="empty" style="display:none"><i class="ti ti-hexagon-off"></i>Nuk ka koshere të shtuara</div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT ENTRY -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="edit-modal-title"><i class="ti ti-pencil" style="color:var(--amber);margin-right:6px"></i>Ndrysho shënimin</span>
+      <button class="modal-close" onclick="closeModal('modal-edit')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-entry-cat">
+    <div id="edit-modal-fields" style="margin-bottom:12px"></div>
+    <div class="btn-row">
+      <button class="btn-action btn-primary" onclick="saveEditEntry()" style="flex:1;justify-content:center"><i class="ti ti-device-floppy"></i>Ruaj ndryshimet</button>
+      <button class="btn-action btn-secondary" onclick="closeModal('modal-edit')"><i class="ti ti-x"></i>Anulo</button>
+    </div>
   </div>
 </div>
 
@@ -1092,7 +1110,7 @@ function renderView(n){
         content=det+(e.note?'<br><span style="color:var(--text2)">'+esc(e.note)+'</span>':'');
       }
       else content=esc(e.text||'').replace(/\n/g,'<br>');
-      h+=`<div class="entry-card" data-cat="${e.cat||'shenime'}"><div class="entry-header"><span class="entry-cat-badge ${meta.badge}"><i class="ti ${meta.icon}"></i>${meta.label}</span><span class="entry-date"><i class="ti ti-calendar"></i>${d}/${m}/${y}</span><button class="btn-del" onclick="delEntry(${n},${e.id})"><i class="ti ti-trash"></i></button></div><div class="entry-text">${content}</div></div>`;
+      h+=`<div class="entry-card" data-cat="${e.cat||'shenime'}"><div class="entry-header"><span class="entry-cat-badge ${meta.badge}"><i class="ti ${meta.icon}"></i>${meta.label}</span><span class="entry-date"><i class="ti ti-calendar"></i>${d}/${m}/${y}</span><div style="display:flex;gap:6px"><button class="btn-del btn-del-edit" onclick="editEntry(${n},'${e.id}')"><i class="ti ti-pencil"></i></button><button class="btn-del btn-del-del" onclick="delEntry(${n},'${e.id}')"><i class="ti ti-trash"></i></button></div></div><div class="entry-text">${content}</div></div>`;
     });
   }
   document.getElementById('view-area').innerHTML=h;
@@ -1108,12 +1126,76 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 
 function delEntry(n,id){
   if(!db[n])return;
-  db[n]=db[n].filter(e=>e.id!==id);
+  if(!confirm('Fshi këtë shënim?'))return;
+  db[n]=db[n].filter(e=>String(e.id)!==String(id));
   if(!db[n].length)delete db[n];
   persist();
   if(getGistToken()&&getGistId())gistPush();
   buildGrid('grid-view',selectView);renderView(n);updateStats();
   toast('Shënimi u fshi.','ti-trash');
+}
+
+// ─── EDIT ENTRY ──────────────────────────────────────────
+let editHive=null,editId=null;
+function editEntry(n,id){
+  const list=db[n]||[];
+  const e=list.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  editHive=n;editId=id;
+  // Build a simple edit modal dynamically
+  let fields='';
+  if(e.cat==='shenime'){
+    fields=`<div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="edit-date" value="${e.date}"></div>
+    <div class="field-row"><div class="label">Shënim</div><textarea class="form-input" id="edit-text" rows="3" style="resize:vertical">${esc(e.text||'')}</textarea></div>`;
+  } else if(e.cat==='trajtime'){
+    fields=`<div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="edit-date" value="${e.date}"></div>
+    <div class="field-row"><div class="label">Lloji</div><input type="text" class="form-input" id="edit-type" value="${esc(e.type||'')}"></div>
+    <div class="field-row"><div class="label">Doza</div><input type="text" class="form-input" id="edit-doza" value="${esc(e.doza||'')}"></div>
+    <div class="field-row"><div class="label">Shënim</div><textarea class="form-input" id="edit-note" rows="2" style="resize:vertical">${esc(e.note||'')}</textarea></div>`;
+  } else if(e.cat==='ushqim'){
+    fields=`<div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="edit-date" value="${e.date}"></div>
+    <div class="field-row"><div class="label">Lloji</div><input type="text" class="form-input" id="edit-type" value="${esc(e.type||'')}"></div>
+    <div class="field-row"><div class="label">Sasia (kg/l)</div><input type="text" class="form-input" id="edit-sasia" value="${esc(e.sasia||'')}"></div>
+    <div class="field-row"><div class="label">Shënim</div><textarea class="form-input" id="edit-note" rows="2" style="resize:vertical">${esc(e.note||'')}</textarea></div>`;
+  } else if(e.cat==='mbreteresha'){
+    fields=`<div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="edit-date" value="${e.date}"></div>
+    <div class="field-row"><div class="label">Gjendja</div><input type="text" class="form-input" id="edit-gjendje" value="${esc(e.gjendje||'')}"></div>
+    <div class="field-row"><div class="label">Raca</div><input type="text" class="form-input" id="edit-raca" value="${esc(e.raca||'')}"></div>
+    <div class="field-row"><div class="label">Viti</div><input type="text" class="form-input" id="edit-viti" value="${esc(e.viti||'')}"></div>
+    <div class="field-row"><div class="label">Shënim</div><textarea class="form-input" id="edit-note" rows="2" style="resize:vertical">${esc(e.note||'')}</textarea></div>`;
+  } else if(e.cat==='mjalti'){
+    const vLabels={'shto-depo':'Vendosur depo','heq-depo':'Hequr depo','mjelje':'Mjelje','vleresim':'Vlerësim rezervash'};
+    fields=`<div class="field-row"><div class="label">Data</div><input type="date" class="form-input" id="edit-date" value="${e.date}"></div>
+    <div class="field-row"><div class="label">Veprimi</div><input type="text" class="form-input" id="edit-veprimi" value="${esc(vLabels[e.veprimi]||e.veprimi||'')}"></div>
+    <div class="field-row"><div class="label">Sasia (kg)</div><input type="text" class="form-input" id="edit-sasia" value="${esc(e.sasia||'')}"></div>
+    <div class="field-row"><div class="label">Shënim</div><textarea class="form-input" id="edit-note" rows="2" style="resize:vertical">${esc(e.note||'')}</textarea></div>`;
+  }
+  const meta=CAT_META[e.cat||'shenime'];
+  document.getElementById('edit-modal-title').innerHTML=`<i class="ti ${meta.icon}" style="color:var(--amber)"></i>Ndrysho — Koshere ${n}`;
+  document.getElementById('edit-modal-fields').innerHTML=fields;
+  document.getElementById('edit-entry-cat').value=e.cat||'shenime';
+  document.getElementById('modal-edit').classList.add('open');
+}
+function saveEditEntry(){
+  const n=editHive;const id=editId;
+  if(!n||!id)return;
+  const list=db[n]||[];
+  const idx=list.findIndex(x=>String(x.id)===String(id));
+  if(idx===-1)return;
+  const e=list[idx];
+  const cat=e.cat||'shenime';
+  const date=document.getElementById('edit-date')?.value||e.date;
+  if(cat==='shenime'){e.date=date;e.text=document.getElementById('edit-text')?.value.trim()||e.text;}
+  else if(cat==='trajtime'){e.date=date;e.type=document.getElementById('edit-type')?.value.trim()||e.type;e.doza=document.getElementById('edit-doza')?.value.trim();e.note=document.getElementById('edit-note')?.value.trim();}
+  else if(cat==='ushqim'){e.date=date;e.type=document.getElementById('edit-type')?.value.trim()||e.type;e.sasia=document.getElementById('edit-sasia')?.value.trim();e.note=document.getElementById('edit-note')?.value.trim();}
+  else if(cat==='mbreteresha'){e.date=date;e.gjendje=document.getElementById('edit-gjendje')?.value.trim()||e.gjendje;e.raca=document.getElementById('edit-raca')?.value.trim();e.viti=document.getElementById('edit-viti')?.value.trim();e.note=document.getElementById('edit-note')?.value.trim();}
+  else if(cat==='mjalti'){e.date=date;e.sasia=document.getElementById('edit-sasia')?.value.trim();e.note=document.getElementById('edit-note')?.value.trim();}
+  db[n].sort((a,b)=>a.date.localeCompare(b.date));
+  persist();
+  if(getGistToken()&&getGistId())gistPush();
+  closeModal('modal-edit');
+  renderView(n);updateStats();
+  toast('Shënimi u ndryshua!','ti-pencil');
 }
 
 // ─── STATS ───────────────────────────────────────────────
