@@ -548,11 +548,19 @@ function buildGrid(id,onClick){
       // Ngjyra sipas vitit të mbretëreshës
       const qc=getQueenYearColor(i);
       if(qc){
+        // Heqim has-data që të mos bllokojë ngjyrën (sidomos në Safari/mobile)
+        b.classList.remove('has-data');
         b.classList.add('queen-colored');
         b.style.setProperty('--qbg', qc.color.bg);
         b.style.setProperty('--qborder', qc.color.border);
         b.style.setProperty('--qtext', qc.color.text);
+        // Aplikojmë edhe direkt si backup për Safari
+        b.style.background=qc.color.bg;
+        b.style.borderColor=qc.color.border;
+        b.style.color=qc.color.text;
         b.title='Mbretëresha '+qc.year+' — '+qc.color.label;
+        const dot=b.querySelector('.dot');
+        if(dot){dot.style.background=qc.color.border;}
       }
       b.onclick=(function(hn){return function(){onClick(hn);};})(i);
     }
@@ -1018,14 +1026,21 @@ async function driveUpload(){
   try{
     const content=JSON.stringify({version:3,saved:new Date().toISOString(),db:db,hives:getHives()},null,2);
     const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id)",{headers:{Authorization:'Bearer '+driveAccessToken}});
-    const qd=await q.json();const fileId=qd.files&&qd.files.length?qd.files[0].id:null;
+    if(!q.ok){throw new Error('Kërkimi dështoi: '+q.status);}
+    const qd=await q.json();
+    const fileId=qd.files&&qd.files.length?qd.files[0].id:null;
+    let uploadResp;
     if(fileId){
-      await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
+      uploadResp=await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
     } else {
       const boundary='bletaria_b';
       const meta=JSON.stringify({name:DRIVE_FILE_NAME,mimeType:'application/json'});
       const body='--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+meta+'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+content+'\r\n--'+boundary+'--';
-      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'multipart/related; boundary='+boundary},body});
+      uploadResp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'multipart/related; boundary='+boundary},body});
+    }
+    if(!uploadResp.ok){
+      const errText=await uploadResp.text();
+      throw new Error('Ngarkimi dështoi ('+uploadResp.status+'): '+errText.substring(0,100));
     }
     const ts=new Date().toLocaleTimeString();
     localStorage.setItem('drive_last_sync',ts);
@@ -1038,19 +1053,38 @@ async function driveDownload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
   setDriveStatus('loader','Duke marrë të dhënat...','#FEF3C7','#78350F');
   try{
-    const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id)",{headers:{Authorization:'Bearer '+driveAccessToken}});
+    // Kërko skedarin
+    const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id,name,modifiedTime)",{headers:{Authorization:'Bearer '+driveAccessToken}});
+    if(!q.ok){throw new Error('Kërkimi dështoi: '+q.status);}
     const qd=await q.json();
-    if(!qd.files||!qd.files.length){toast('Nuk u gjet skedar në Drive','ti-alert-circle',true);setDriveStatus('cloud-x','Skedari nuk u gjet','#FEE2E2','#991B1B');return;}
+    if(!qd.files||!qd.files.length){
+      toast('Nuk u gjet skedar në Drive','ti-alert-circle',true);
+      setDriveStatus('cloud-x','Skedari nuk u gjet','#FEE2E2','#991B1B');
+      return;
+    }
+    // Shkarko përmbajtjen si tekst
     const r=await fetch('https://www.googleapis.com/drive/v3/files/'+qd.files[0].id+'?alt=media',{headers:{Authorization:'Bearer '+driveAccessToken}});
-    let parsed=await r.json();
-    if(parsed.db){db=parsed.db;persist();}
-    if(parsed.hives&&Array.isArray(parsed.hives))saveHives(parsed.hives);
+    if(!r.ok){throw new Error('Shkarkimi dështoi: '+r.status);}
+    const rawText=await r.text();
+    if(!rawText||rawText.trim()===''){throw new Error('Skedari është bosh');}
+    let parsed;
+    try{parsed=JSON.parse(rawText);}
+    catch(pe){throw new Error('JSON i pavlefshëm: '+pe.message);}
+    // Apliko të dhënat
+    let changed=false;
+    if(parsed.db&&typeof parsed.db==='object'){db=parsed.db;persist();changed=true;}
+    if(parsed.hives&&Array.isArray(parsed.hives)){saveHives(parsed.hives);changed=true;}
+    if(!changed){throw new Error('Skedari nuk ka të dhëna të njohura');}
     buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
     const ts=new Date().toLocaleTimeString();
+    localStorage.setItem('drive_last_sync',ts);
     document.getElementById('drive-last-sync').textContent='Marrë: '+ts;
     setDriveStatus('cloud-check','I sinkronizuar ✓ — '+ts,'#D1FAE5','#065F46');
     toast('Të dhënat u morën nga Drive!','ti-cloud-download');
-  }catch(ex){setDriveStatus('cloud-x','Gabim: '+ex.message,'#FEE2E2','#991B1B');toast('Dështoi: '+ex.message,'ti-alert-circle',true);}
+  }catch(ex){
+    setDriveStatus('cloud-x','Gabim: '+ex.message,'#FEE2E2','#991B1B');
+    toast('Dështoi: '+ex.message,'ti-alert-circle',true);
+  }
 }
 function driveAutoSync(){
   if(driveAccessToken)driveUpload();
