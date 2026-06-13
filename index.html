@@ -63,13 +63,6 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .hex-btn:active{transform:scale(0.93)}
 .hex-btn.has-data{border-color:var(--amber);color:var(--amber-dark);background:var(--amber-light)}
 [data-theme="dark"] .hex-btn.has-data{color:var(--amber)}
-.hex-btn.queen-colored{background:var(--qbg)!important;border-color:var(--qborder)!important;color:var(--qtext)!important}
-.hex-btn.queen-colored .dot{background:var(--qborder)!important}
-.queen-legend{margin-bottom:14px;padding:10px 12px;background:var(--bg2);border:1.5px solid var(--border1);border-radius:10px}
-.queen-legend-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.queen-legend-items{display:flex;flex-wrap:wrap;gap:5px}
-.queen-legend-item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;border:2px solid transparent}
-.queen-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
 .dot{width:6px;height:6px;background:var(--amber);border-radius:50%;position:absolute;top:5px;right:5px}
 .hex-btn.hidden-cell{display:none}
 .sel-bar{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--amber-dark);display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -213,7 +206,6 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="search-clear" onclick="clearSearch('search-add','grid-add')" style="display:none" id="clr-add"><i class="ti ti-x"></i></button>
       </div>
       <div class="hive-grid" id="grid-add"></div>
-      <div class="queen-legend" id="queen-legend-add"></div>
     </div>
     <div id="form-add" style="display:none">
       <div class="sel-bar">
@@ -246,7 +238,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div id="fields-mbreteresha" style="display:none">
         <div class="field-row"><div class="label">Data e regjistrimit</div><input type="date" class="form-input" id="mbre-date"></div>
         <div class="field-row"><div class="label">Viti i lindjes / çeljes</div><input type="number" class="form-input" id="mbre-viti" placeholder="2024" min="2000" max="2030"></div>
-        <div class="field-row"><div class="label">Raca</div><select class="form-input form-select" id="mbre-raca"><option value="">Zgjidh...</option><option>E Kuqe e çelët</option><option>E kuqe e errët</option><option>E zezë</option><option>Hibride</option><option>E panjohur</option></select></div>
+        <div class="field-row"><div class="label">Raca</div><select class="form-input form-select" id="mbre-raca"><option value="">Zgjidh...</option><option>Apis mellifera ligustica</option><option>Apis mellifera carnica</option><option>Apis mellifera macedonica</option><option>Hibride</option><option>E panjohur</option></select></div>
         <div class="field-row"><div class="label">Gjendje</div><select class="form-input form-select" id="mbre-gjendje"><option value="">Zgjidh...</option><option>Aktive — veza normalisht</option><option>E re — sapo çelur</option><option>E humbur — pa mbretëreshë</option><option>Zëvendësuar</option><option>Vërehet rënie</option></select></div>
         <div class="field-row"><div class="label">Shënime</div><textarea class="form-input note-input" id="mbre-note" placeholder="Vëzhgime mbi mbretëreshën..." style="min-height:60px"></textarea></div>
       </div>
@@ -289,7 +281,6 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="search-clear" onclick="clearSearch('search-view','grid-view')" style="display:none" id="clr-view"><i class="ti ti-x"></i></button>
       </div>
       <div class="hive-grid" id="grid-view"></div>
-      <div class="queen-legend" id="queen-legend-view"></div>
     </div>
     <div id="view-area" style="display:none"></div>
   </div>
@@ -344,7 +335,6 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="btn-action btn-primary" id="btn-drive-connect" onclick="initDrive()"><i class="ti ti-link"></i>Lidhu me Drive</button>
         <button class="btn-action btn-secondary" id="btn-drive-upload" onclick="driveUpload()" style="display:none"><i class="ti ti-cloud-upload"></i>Ruaj tani</button>
         <button class="btn-action btn-secondary" id="btn-drive-download" onclick="driveDownload()" style="display:none"><i class="ti ti-cloud-download"></i>Merr nga Drive</button>
-        <button class="btn-action btn-danger" id="btn-drive-disconnect" onclick="disconnectDrive()" style="display:none"><i class="ti ti-unlink"></i>Shkëput</button>
       </div>
       <div style="margin-top:8px;font-size:12px;color:var(--text3)" id="drive-last-sync"></div>
     </div>
@@ -485,31 +475,6 @@ function getHives(){
 }
 function saveHives(arr){localStorage.setItem('bletaria_hives',JSON.stringify([...new Set(arr)].sort((a,b)=>a-b)));}
 
-// ─── NGJYRA E MBRETËRESHËS (sistemi ndërkombëtar) ────────
-// 1/6→E bardhë, 2/7→E verdhë, 3/8→E kuqe, 4/9→Jeshile, 5/0→Blu
-const QUEEN_COLORS={
-  0:{bg:'#93C5FD',border:'#1D4ED8',text:'#1e3a8a',label:'Blu'},
-  1:{bg:'#E5E7EB',border:'#6B7280',text:'#111827',label:'E bardhë'},
-  2:{bg:'#FDE047',border:'#CA8A04',text:'#713F12',label:'E verdhë'},
-  3:{bg:'#FCA5A5',border:'#DC2626',text:'#7F1D1D',label:'E kuqe'},
-  4:{bg:'#6EE7B7',border:'#059669',text:'#064E3B',label:'Jeshile'},
-  5:{bg:'#93C5FD',border:'#1D4ED8',text:'#1e3a8a',label:'Blu'},
-  6:{bg:'#E5E7EB',border:'#6B7280',text:'#111827',label:'E bardhë'},
-  7:{bg:'#FDE047',border:'#CA8A04',text:'#713F12',label:'E verdhë'},
-  8:{bg:'#FCA5A5',border:'#DC2626',text:'#7F1D1D',label:'E kuqe'},
-  9:{bg:'#6EE7B7',border:'#059669',text:'#064E3B',label:'Jeshile'},
-};
-function getQueenYearColor(hiveNum){
-  const entries=db[hiveNum]||[];
-  // Gjejmë shënimin e fundit mbretëresha me vit
-  const queenEntries=entries.filter(function(e){return e.cat==='mbreteresha'&&e.viti;});
-  if(!queenEntries.length) return null;
-  queenEntries.sort(function(a,b){return b.date.localeCompare(a.date);});
-  const yr=parseInt(queenEntries[0].viti);
-  if(isNaN(yr)) return null;
-  return {color:QUEEN_COLORS[yr%10], year:yr};
-}
-
 // ─── GRID ────────────────────────────────────────────────
 let deleteMode=false;
 function toggleDeleteMode(){
@@ -545,23 +510,6 @@ function buildGrid(id,onClick){
     } else {
       b.textContent=i;
       if(db[i]&&db[i].length){b.classList.add('has-data');const d=document.createElement('span');d.className='dot';b.appendChild(d);}
-      // Ngjyra sipas vitit të mbretëreshës
-      const qc=getQueenYearColor(i);
-      if(qc){
-        // Heqim has-data që të mos bllokojë ngjyrën (sidomos në Safari/mobile)
-        b.classList.remove('has-data');
-        b.classList.add('queen-colored');
-        b.style.setProperty('--qbg', qc.color.bg);
-        b.style.setProperty('--qborder', qc.color.border);
-        b.style.setProperty('--qtext', qc.color.text);
-        // Aplikojmë edhe direkt si backup për Safari
-        b.style.background=qc.color.bg;
-        b.style.borderColor=qc.color.border;
-        b.style.color=qc.color.text;
-        b.title='Mbretëresha '+qc.year+' — '+qc.color.label;
-        const dot=b.querySelector('.dot');
-        if(dot){dot.style.background=qc.color.border;}
-      }
       b.onclick=(function(hn){return function(){onClick(hn);};})(i);
     }
     g.appendChild(b);
@@ -930,48 +878,6 @@ function setDriveStatus(icon,msg,bg,color){
   bar.style.background=bg;bar.style.color=color;
   bar.innerHTML='<i class="ti ti-'+icon+'" style="font-size:18px"></i><span id="drive-status-txt">'+msg+'</span>';
 }
-
-function saveDriveToken(token){
-  // Token-i i Google zgjat ~1 orë (3600 sekonda). Ruajmë tokenin dhe kohën e skadencës.
-  const expiry=Date.now()+3500*1000; // 3500 sek për të qenë i sigurt
-  localStorage.setItem('drive_access_token', token);
-  localStorage.setItem('drive_token_expiry', String(expiry));
-}
-
-function loadDriveToken(){
-  const token=localStorage.getItem('drive_access_token');
-  const expiry=parseInt(localStorage.getItem('drive_token_expiry')||'0');
-  if(token && Date.now()<expiry) return token;
-  return null;
-}
-
-function clearDriveToken(){
-  localStorage.removeItem('drive_access_token');
-  localStorage.removeItem('drive_token_expiry');
-}
-
-function onDriveConnected(accessToken, silent){
-  driveAccessToken=accessToken;
-  saveDriveToken(accessToken);
-  document.getElementById('btn-drive-connect').style.display='none';
-  document.getElementById('btn-drive-upload').style.display='inline-flex';
-  document.getElementById('btn-drive-download').style.display='inline-flex';
-  document.getElementById('btn-drive-disconnect').style.display='inline-flex';
-  setDriveStatus('cloud-check','I lidhur me Google Drive ✓','#D1FAE5','#065F46');
-  if(!silent) toast('Drive u lidh!','ti-brand-google-drive');
-}
-
-function disconnectDrive(){
-  clearDriveToken();
-  driveAccessToken=null;
-  document.getElementById('btn-drive-connect').style.display='inline-flex';
-  document.getElementById('btn-drive-upload').style.display='none';
-  document.getElementById('btn-drive-download').style.display='none';
-  document.getElementById('btn-drive-disconnect').style.display='none';
-  setDriveStatus('cloud-off','Jo i lidhur me Drive','#F3F4F6','#6b7280');
-  toast('U shkëput nga Drive','ti-unlink');
-}
-
 function initDrive(){
   if(!window.google){
     const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
@@ -979,46 +885,22 @@ function initDrive(){
     document.head.appendChild(s);
   } else doGoogleAuth();
 }
-
-function doGoogleAuth(silent){
+function doGoogleAuth(){
   try{
     driveTokenClient=google.accounts.oauth2.initTokenClient({
       client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,
       callback:function(r){
-        if(r.error){
-          clearDriveToken();
-          if(!silent) toast('Autentikimi dështoi: '+r.error,'ti-alert-circle',true);
-          return;
-        }
-        onDriveConnected(r.access_token, silent);
+        if(r.error){toast('Autentikimi dështoi: '+r.error,'ti-alert-circle',true);return;}
+        driveAccessToken=r.access_token;
+        document.getElementById('btn-drive-connect').style.display='none';
+        document.getElementById('btn-drive-upload').style.display='inline-flex';
+        document.getElementById('btn-drive-download').style.display='inline-flex';
+        setDriveStatus('cloud-check','I lidhur me Google Drive ✓','#D1FAE5','#065F46');
+        toast('Drive u lidh!','ti-brand-google-drive');
       }
     });
-    // Nëse silent=true, provojmë pa dialog (prompt:''); nëse dështon, nuk tregojmë gabim
-    driveTokenClient.requestAccessToken({prompt: silent ? '' : 'consent'});
-  }catch(ex){
-    if(!silent) toast('Gabim: '+ex.message,'ti-alert-circle',true);
-  }
-}
-
-function tryAutoReconnectDrive(){
-  // Provojmë të ripërdorim tokenin e ruajtur pa shfaqur asgjë tek përdoruesi
-  const savedToken=loadDriveToken();
-  if(savedToken){
-    // Token i vlefshëm — rilidhjë e heshtur
-    driveAccessToken=savedToken;
-    document.getElementById('btn-drive-connect').style.display='none';
-    document.getElementById('btn-drive-upload').style.display='inline-flex';
-    document.getElementById('btn-drive-download').style.display='inline-flex';
-    document.getElementById('btn-drive-disconnect').style.display='inline-flex';
-    setDriveStatus('cloud-check','I lidhur me Google Drive ✓','#D1FAE5','#065F46');
-    return;
-  }
-  // Token skaduar — provojmë rifreskim të heshtur nëse Google SDK është ngarkuar
-  if(window.google && window.google.accounts){
-    const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
-    s.onload=function(){ doGoogleAuth(true); };
-    document.head.appendChild(s);
-  }
+    driveTokenClient.requestAccessToken({prompt:'consent'});
+  }catch(ex){toast('Gabim: '+ex.message,'ti-alert-circle',true);}
 }
 async function driveUpload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
@@ -1026,21 +908,14 @@ async function driveUpload(){
   try{
     const content=JSON.stringify({version:3,saved:new Date().toISOString(),db:db,hives:getHives()},null,2);
     const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id)",{headers:{Authorization:'Bearer '+driveAccessToken}});
-    if(!q.ok){throw new Error('Kërkimi dështoi: '+q.status);}
-    const qd=await q.json();
-    const fileId=qd.files&&qd.files.length?qd.files[0].id:null;
-    let uploadResp;
+    const qd=await q.json();const fileId=qd.files&&qd.files.length?qd.files[0].id:null;
     if(fileId){
-      uploadResp=await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
+      await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
     } else {
       const boundary='bletaria_b';
       const meta=JSON.stringify({name:DRIVE_FILE_NAME,mimeType:'application/json'});
       const body='--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+meta+'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+content+'\r\n--'+boundary+'--';
-      uploadResp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'multipart/related; boundary='+boundary},body});
-    }
-    if(!uploadResp.ok){
-      const errText=await uploadResp.text();
-      throw new Error('Ngarkimi dështoi ('+uploadResp.status+'): '+errText.substring(0,100));
+      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'multipart/related; boundary='+boundary},body});
     }
     const ts=new Date().toLocaleTimeString();
     localStorage.setItem('drive_last_sync',ts);
@@ -1053,38 +928,19 @@ async function driveDownload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
   setDriveStatus('loader','Duke marrë të dhënat...','#FEF3C7','#78350F');
   try{
-    // Kërko skedarin
-    const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id,name,modifiedTime)",{headers:{Authorization:'Bearer '+driveAccessToken}});
-    if(!q.ok){throw new Error('Kërkimi dështoi: '+q.status);}
+    const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id)",{headers:{Authorization:'Bearer '+driveAccessToken}});
     const qd=await q.json();
-    if(!qd.files||!qd.files.length){
-      toast('Nuk u gjet skedar në Drive','ti-alert-circle',true);
-      setDriveStatus('cloud-x','Skedari nuk u gjet','#FEE2E2','#991B1B');
-      return;
-    }
-    // Shkarko përmbajtjen si tekst
+    if(!qd.files||!qd.files.length){toast('Nuk u gjet skedar në Drive','ti-alert-circle',true);setDriveStatus('cloud-x','Skedari nuk u gjet','#FEE2E2','#991B1B');return;}
     const r=await fetch('https://www.googleapis.com/drive/v3/files/'+qd.files[0].id+'?alt=media',{headers:{Authorization:'Bearer '+driveAccessToken}});
-    if(!r.ok){throw new Error('Shkarkimi dështoi: '+r.status);}
-    const rawText=await r.text();
-    if(!rawText||rawText.trim()===''){throw new Error('Skedari është bosh');}
-    let parsed;
-    try{parsed=JSON.parse(rawText);}
-    catch(pe){throw new Error('JSON i pavlefshëm: '+pe.message);}
-    // Apliko të dhënat
-    let changed=false;
-    if(parsed.db&&typeof parsed.db==='object'){db=parsed.db;persist();changed=true;}
-    if(parsed.hives&&Array.isArray(parsed.hives)){saveHives(parsed.hives);changed=true;}
-    if(!changed){throw new Error('Skedari nuk ka të dhëna të njohura');}
+    let parsed=await r.json();
+    if(parsed.db){db=parsed.db;persist();}
+    if(parsed.hives&&Array.isArray(parsed.hives))saveHives(parsed.hives);
     buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
     const ts=new Date().toLocaleTimeString();
-    localStorage.setItem('drive_last_sync',ts);
     document.getElementById('drive-last-sync').textContent='Marrë: '+ts;
     setDriveStatus('cloud-check','I sinkronizuar ✓ — '+ts,'#D1FAE5','#065F46');
     toast('Të dhënat u morën nga Drive!','ti-cloud-download');
-  }catch(ex){
-    setDriveStatus('cloud-x','Gabim: '+ex.message,'#FEE2E2','#991B1B');
-    toast('Dështoi: '+ex.message,'ti-alert-circle',true);
-  }
+  }catch(ex){setDriveStatus('cloud-x','Gabim: '+ex.message,'#FEE2E2','#991B1B');toast('Dështoi: '+ex.message,'ti-alert-circle',true);}
 }
 function driveAutoSync(){
   if(driveAccessToken)driveUpload();
@@ -1117,35 +973,9 @@ function toast(msg,icon,err){
   clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},2600);
 }
 
-function buildQueenLegend(){
-  const ITEMS=[
-    {bg:'#E5E7EB',border:'#6B7280',text:'#111827',label:'E bardhë',years:'2021/2026'},
-    {bg:'#FDE047',border:'#CA8A04',text:'#713F12',label:'E verdhë',years:'2022/2027'},
-    {bg:'#FCA5A5',border:'#DC2626',text:'#7F1D1D',label:'E kuqe',years:'2023/2028'},
-    {bg:'#6EE7B7',border:'#059669',text:'#064E3B',label:'Jeshile',years:'2024/2029'},
-    {bg:'#93C5FD',border:'#1D4ED8',text:'#1e3a8a',label:'Blu',years:'2025/2030'},
-  ];
-  const html='<div class="queen-legend-title"><i class="ti ti-crown"></i> Ngjyra e mbretëreshës:</div>'
-    +'<div class="queen-legend-items">'
-    +ITEMS.map(function(c){
-      return '<span class="queen-legend-item" style="background:'+c.bg+';border-color:'+c.border+';color:'+c.text+'">'
-        +'<span class="queen-legend-dot" style="background:'+c.border+'"></span>'
-        +c.label+' <span style="opacity:0.7;font-size:11px">'+c.years+'</span>'
-        +'</span>';
-    }).join('')
-    +'</div>';
-  ['queen-legend-add','queen-legend-view'].forEach(function(id){
-    const el=document.getElementById(id);
-    if(el) el.innerHTML=html;
-  });
-}
-
 // ─── INIT ────────────────────────────────────────────────
 load();initTheme();
 buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
-buildQueenLegend();
-// Provojmë rilidhjën automatike me Drive pa shfaqur dialog
-setTimeout(tryAutoReconnectDrive, 1500);
 
 setTimeout(function(){
   document.getElementById('splash').classList.add('hide');
