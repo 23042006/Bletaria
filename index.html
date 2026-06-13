@@ -206,6 +206,14 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="search-clear" onclick="clearSearch('search-add','grid-add')" style="display:none" id="clr-add"><i class="ti ti-x"></i></button>
       </div>
       <div class="hive-grid" id="grid-add"></div>
+      <div id="queen-legend" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
+        <span style="color:var(--text2);font-weight:600;width:100%;margin-bottom:2px"><i class="ti ti-crown" style="font-size:12px"></i> Ngjyra e mbretëreshës:</span>
+        <span style="background:#E5E7EB;border:1.5px solid #6B7280;color:#111827;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E bardhë — 2021/2026</span>
+        <span style="background:#FDE047;border:1.5px solid #CA8A04;color:#713F12;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E verdhë — 2022/2027</span>
+        <span style="background:#FCA5A5;border:1.5px solid #DC2626;color:#7F1D1D;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E kuqe — 2023/2028</span>
+        <span style="background:#6EE7B7;border:1.5px solid #059669;color:#064E3B;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Jeshile — 2024/2029</span>
+        <span style="background:#93C5FD;border:1.5px solid #1D4ED8;color:#1e3a8a;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Blu — 2025/2030</span>
+      </div>
     </div>
     <div id="form-add" style="display:none">
       <div class="sel-bar">
@@ -281,6 +289,14 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="search-clear" onclick="clearSearch('search-view','grid-view')" style="display:none" id="clr-view"><i class="ti ti-x"></i></button>
       </div>
       <div class="hive-grid" id="grid-view"></div>
+      <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
+        <span style="color:var(--text2);font-weight:600;width:100%;margin-bottom:2px"><i class="ti ti-crown" style="font-size:12px"></i> Ngjyra e mbretëreshës:</span>
+        <span style="background:#E5E7EB;border:1.5px solid #6B7280;color:#111827;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E bardhë — 2021/2026</span>
+        <span style="background:#FDE047;border:1.5px solid #CA8A04;color:#713F12;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E verdhë — 2022/2027</span>
+        <span style="background:#FCA5A5;border:1.5px solid #DC2626;color:#7F1D1D;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E kuqe — 2023/2028</span>
+        <span style="background:#6EE7B7;border:1.5px solid #059669;color:#064E3B;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Jeshile — 2024/2029</span>
+        <span style="background:#93C5FD;border:1.5px solid #1D4ED8;color:#1e3a8a;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Blu — 2025/2030</span>
+      </div>
     </div>
     <div id="view-area" style="display:none"></div>
   </div>
@@ -476,6 +492,31 @@ function getHives(){
 }
 function saveHives(arr){localStorage.setItem('bletaria_hives',JSON.stringify([...new Set(arr)].sort((a,b)=>a-b)));}
 
+// ─── NGJYRA E MBRETËRESHËS (sistemi ndërkombëtar) ────────
+// 1/6→E bardhë, 2/7→E verdhë, 3/8→E kuqe, 4/9→Jeshile, 5/0→Blu
+const QUEEN_COLORS={
+  0:{bg:'#93C5FD',border:'#1D4ED8',text:'#1e3a8a',label:'Blu'},
+  1:{bg:'#E5E7EB',border:'#6B7280',text:'#111827',label:'E bardhë'},
+  2:{bg:'#FDE047',border:'#CA8A04',text:'#713F12',label:'E verdhë'},
+  3:{bg:'#FCA5A5',border:'#DC2626',text:'#7F1D1D',label:'E kuqe'},
+  4:{bg:'#6EE7B7',border:'#059669',text:'#064E3B',label:'Jeshile'},
+  5:{bg:'#93C5FD',border:'#1D4ED8',text:'#1e3a8a',label:'Blu'},
+  6:{bg:'#E5E7EB',border:'#6B7280',text:'#111827',label:'E bardhë'},
+  7:{bg:'#FDE047',border:'#CA8A04',text:'#713F12',label:'E verdhë'},
+  8:{bg:'#FCA5A5',border:'#DC2626',text:'#7F1D1D',label:'E kuqe'},
+  9:{bg:'#6EE7B7',border:'#059669',text:'#064E3B',label:'Jeshile'},
+};
+function getQueenYearColor(hiveNum){
+  const entries=db[hiveNum]||[];
+  // Gjejmë shënimin e fundit mbretëresha me vit
+  const queenEntries=entries.filter(function(e){return e.cat==='mbreteresha'&&e.viti;});
+  if(!queenEntries.length) return null;
+  queenEntries.sort(function(a,b){return b.date.localeCompare(a.date);});
+  const yr=parseInt(queenEntries[0].viti);
+  if(isNaN(yr)) return null;
+  return {color:QUEEN_COLORS[yr%10], year:yr};
+}
+
 // ─── GRID ────────────────────────────────────────────────
 let deleteMode=false;
 function toggleDeleteMode(){
@@ -511,6 +552,17 @@ function buildGrid(id,onClick){
     } else {
       b.textContent=i;
       if(db[i]&&db[i].length){b.classList.add('has-data');const d=document.createElement('span');d.className='dot';b.appendChild(d);}
+      // Ngjyra sipas vitit të mbretëreshës
+      const qc=getQueenYearColor(i);
+      if(qc){
+        b.style.background=qc.color.bg;
+        b.style.borderColor=qc.color.border;
+        b.style.color=qc.color.text;
+        b.title='Mbretëresha '+qc.year+' — '+qc.color.label;
+        // Dot i ngjyrës së mbretëreshës
+        const dot=b.querySelector('.dot');
+        if(dot) dot.style.background=qc.color.border;
+      }
       b.onclick=(function(hn){return function(){onClick(hn);};})(i);
     }
     g.appendChild(b);
