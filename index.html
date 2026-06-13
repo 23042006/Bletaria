@@ -63,8 +63,8 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .hex-btn:active{transform:scale(0.93)}
 .hex-btn.has-data{border-color:var(--amber);color:var(--amber-dark);background:var(--amber-light)}
 [data-theme="dark"] .hex-btn.has-data{color:var(--amber)}
-.hex-btn.queen-colored{background:var(--qbg)!important;border-color:var(--qborder)!important;color:var(--qtext)!important}
-.hex-btn.queen-colored .dot{background:var(--qborder)!important}
+.hex-btn.queen-colored{background:var(--qbg);border-color:var(--qborder);color:var(--qtext)}
+.hex-btn.queen-colored .dot{background:var(--qborder)}
 .queen-legend{margin-bottom:14px;padding:10px 12px;background:var(--bg2);border:1.5px solid var(--border1);border-radius:10px}
 .queen-legend-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:5px}
 .queen-legend-items{display:flex;flex-wrap:wrap;gap:5px}
@@ -973,30 +973,34 @@ function disconnectDrive(){
 }
 
 function initDrive(){
-  if(!window.google){
-    const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
-    s.onload=doGoogleAuth;s.onerror=function(){toast('Nuk u ngarkua Google SDK','ti-alert-circle',true);};
-    document.head.appendChild(s);
+  if(!window.google||!window.google.accounts){
+    if(document.querySelector('script[src*="accounts.google.com/gsi/client"]')){
+      // SDK duke u ngarkuar — prisni
+      const wait=setInterval(function(){if(window.google&&window.google.accounts){clearInterval(wait);doGoogleAuth();}},200);
+    } else {
+      const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
+      s.onload=doGoogleAuth;s.onerror=function(){toast('Nuk u ngarkua Google SDK','ti-alert-circle',true);};
+      document.head.appendChild(s);
+    }
   } else doGoogleAuth();
 }
 
-function doGoogleAuth(silent){
+function doGoogleAuth(){
   try{
     driveTokenClient=google.accounts.oauth2.initTokenClient({
       client_id:DRIVE_CLIENT_ID,scope:DRIVE_SCOPE,
       callback:function(r){
         if(r.error){
           clearDriveToken();
-          if(!silent) toast('Autentikimi dështoi: '+r.error,'ti-alert-circle',true);
+          toast('Autentikimi dështoi: '+r.error,'ti-alert-circle',true);
           return;
         }
-        onDriveConnected(r.access_token, silent);
+        onDriveConnected(r.access_token, false);
       }
     });
-    // Nëse silent=true, provojmë pa dialog (prompt:''); nëse dështon, nuk tregojmë gabim
-    driveTokenClient.requestAccessToken({prompt: silent ? '' : 'consent'});
+    driveTokenClient.requestAccessToken({prompt:'consent'});
   }catch(ex){
-    if(!silent) toast('Gabim: '+ex.message,'ti-alert-circle',true);
+    toast('Gabim: '+ex.message,'ti-alert-circle',true);
   }
 }
 
@@ -1013,12 +1017,10 @@ function tryAutoReconnectDrive(){
     setDriveStatus('cloud-check','I lidhur me Google Drive ✓','#D1FAE5','#065F46');
     return;
   }
-  // Token skaduar — provojmë rifreskim të heshtur nëse Google SDK është ngarkuar
-  if(window.google && window.google.accounts){
-    const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
-    s.onload=function(){ doGoogleAuth(true); };
-    document.head.appendChild(s);
-  }
+  // Token skaduar — NUK provojmë silent refresh në mobile (dështon gjithmonë pa user gesture).
+  // Tregojmë mesazh që përdoruesi të rilidhet manualisht.
+  clearDriveToken();
+  setDriveStatus('cloud-off','Sesioni skadoi — Lidhu përsëri','#FEF3C7','#78350F');
 }
 async function driveUpload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
