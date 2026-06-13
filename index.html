@@ -294,7 +294,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 
   <div id="screen-drive" class="screen">
     <div class="action-card"><div class="action-card-title"><i class="ti ti-brand-google-drive"></i>Google Drive Sinkronizim</div><p>Ruaj të dhënat në Google Drive dhe sinkronizo ndërmjet pajisjeve.</p><div id="drive-status-bar" class="drive-status-bar" style="background:var(--bg3);color:var(--text2)"><i class="ti ti-cloud-off" style="font-size:18px"></i><span id="drive-status-txt">Jo i lidhur</span></div><div class="btn-row"><button class="btn-action btn-primary" id="btn-drive-connect" onclick="initDrive()"><i class="ti ti-link"></i>Lidhu me Drive</button><button class="btn-action btn-secondary" id="btn-drive-upload" onclick="driveUpload()" style="display:none"><i class="ti ti-cloud-upload"></i>Ruaj tani</button><button class="btn-action btn-secondary" id="btn-drive-download" onclick="driveDownload()" style="display:none"><i class="ti ti-cloud-download"></i>Merr nga Drive</button><button class="btn-action btn-danger" id="btn-drive-disconnect" onclick="disconnectDrive()" style="display:none"><i class="ti ti-unlink"></i>Shkëput</button></div><div style="margin-top:8px;font-size:12px;color:var(--text3)" id="drive-last-sync"></div></div>
-    <div class="action-card"><div class="action-card-title"><i class="ti ti-info-circle"></i>Si funksionon</div><p style="line-height:1.7">1. Kliko <strong>Lidhu me Drive</strong> — hapet llogaria Google<br>2. Kliko <strong>Ruaj tani</strong> — ruhet në Drive<br>3. Nga pajisja tjetër: Lidhu → <strong>Merr nga Drive</strong><br><br>Të dhënat ruhen si skedar <code>bletaria_sync.json</code> në Drive tuaj.</p></div>
+    <div class="action-card"><div class="action-card-title"><i class="ti ti-info-circle"></i>Si funksionon</div><p style="line-height:1.7">1. Kliko <strong>Lidhu me Drive</strong> — hapet llogaria Google<br>2. Kliko <strong>Ruaj tani</strong> — bashkon dhe ruan në Drive (nuk fshin asgjë)<br>3. Nga pajisja tjetër: Lidhu → <strong>Merr nga Drive</strong> — sjell shënimet e reja pa fshirë ato lokale<br><br>Sinkronizimi bashkon (merge) shënimet nga të dyja pajisjet — asnjë shënim nuk fshihet automatikisht. Të dhënat ruhen si skedar <code>bletaria_sync.json</code> në Drive tuaj.</p></div>
     <div class="action-card"><div class="action-card-title"><i class="ti ti-device-mobile"></i>Instalo si App (PWA)</div><p>Shto aplikacionin në ekranin kryesor të telefonit.</p><div class="btn-row"><button class="btn-action btn-secondary" id="pwa-install-btn" onclick="promptPWA()" style="display:none"><i class="ti ti-download"></i>Instalo App</button><span id="pwa-note" style="font-size:13px;color:var(--text2)">Hap në Chrome mobile → menu → "Shto në ekranin kryesor".</span></div></div>
   </div>
 </div>
@@ -325,6 +325,29 @@ function normDb(raw){
   const out={};
   Object.keys(raw).forEach(k=>{if(Array.isArray(raw[k])&&raw[k].length)out[String(k)]=raw[k];});
   return out;
+}
+// Bashkon dy "db" (lokal + nga Drive) pa fshirë asnjë shënim — bashkim sipas id-së
+function mergeDb(localDb,remoteDb){
+  const merged={};
+  const keys=new Set([...Object.keys(localDb||{}),...Object.keys(remoteDb||{})]);
+  keys.forEach(k=>{
+    const a=Array.isArray((localDb||{})[k])?localDb[k]:[];
+    const b=Array.isArray((remoteDb||{})[k])?remoteDb[k]:[];
+    const map=new Map();
+    a.forEach(e=>{if(e&&e.id!==undefined&&e.id!==null)map.set(String(e.id),e);});
+    b.forEach(e=>{if(e&&e.id!==undefined&&e.id!==null&&!map.has(String(e.id)))map.set(String(e.id),e);});
+    const arr=Array.from(map.values());
+    if(arr.length){
+      arr.sort((x,y)=>String(x.date||'').localeCompare(String(y.date||'')));
+      merged[String(k)]=arr;
+    }
+  });
+  return merged;
+}
+// Bashkon listat e koshereve nga dy pajisje (bashkim, jo zëvendësim)
+function mergeHives(localHives,remoteHives){
+  const set=new Set([...(localHives||[]).map(Number),...(remoteHives||[]).map(Number)]);
+  return [...set].filter(n=>!isNaN(n)&&n>0).sort((a,b)=>a-b);
 }
 function makeDbProxy(target){
   return new Proxy(target,{
@@ -372,10 +395,10 @@ function getQueenYearColor(hiveNum){
   const entries=db[hiveNum]||[];
   const queenEntries=entries.filter(e=>e.cat==='mbreteresha'&&e.viti);
   if(!queenEntries.length) return null;
-  queenEntries.sort((a,b)=>b.date.localeCompare(a.date));
-  const yr=parseInt(queenEntries[0].viti);
+  queenEntries.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const yr=parseInt(String(queenEntries[0].viti).replace(/\D/g,''),10);
   if(isNaN(yr)) return null;
-  return {color:QUEEN_COLORS[yr%5], year:yr};
+  return {color:QUEEN_COLORS[((yr%5)+5)%5], year:yr};
 }
 
 let deleteMode=false;
@@ -967,13 +990,38 @@ function handleDriveRedirect(){
 }
 async function driveUpload(){
   if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
-  setDriveStatus('loader','Duke ruajtur...','#FEF3C7','#78350F');
+  setDriveStatus('loader','Duke sinkronizuar...','#FEF3C7','#78350F');
   try{
-    const content=JSON.stringify({version:3,saved:new Date().toISOString(),db:db,hives:getHives()},null,2);
     const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id)",{headers:{Authorization:'Bearer '+driveAccessToken}});
     if(!q.ok){throw new Error('Kërkimi dështoi: '+q.status);}
     const qd=await q.json();
     const fileId=qd.files&&qd.files.length?qd.files[0].id:null;
+    let mergedNote='';
+    if(fileId){
+      try{
+        const r=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media',{headers:{Authorization:'Bearer '+driveAccessToken}});
+        if(r.ok){
+          const rawText=await r.text();
+          if(rawText&&rawText.trim()){
+            const remote=JSON.parse(rawText);
+            const remoteDb=(remote.db&&typeof remote.db==='object'&&!Array.isArray(remote.db))?normDb(remote.db):{};
+            const remoteHives=Array.isArray(remote.hives)?remote.hives:[];
+            const before=totalCount();
+            db=makeDbProxy(mergeDb(normDb(db),remoteDb));
+            saveHives(mergeHives(getHives(),remoteHives));
+            persist();
+            const added=totalCount()-before;
+            if(added>0){
+              mergedNote=' (+'+added+' nga Drive)';
+              buildGrid('grid-add',selectAdd);
+              buildGrid('grid-view',selectView);
+              updateStats();
+            }
+          }
+        }
+      }catch(me){/* nuk u bashkua dot me Drive, vazhdo me ngarkimin e të dhënave lokale */}
+    }
+    const content=JSON.stringify({version:3,saved:new Date().toISOString(),db:normDb(db),hives:getHives()},null,2);
     let uploadResp;
     if(fileId){
       uploadResp=await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+driveAccessToken,'Content-Type':'application/json'},body:content});
@@ -989,9 +1037,9 @@ async function driveUpload(){
     }
     const ts=new Date().toLocaleTimeString();
     localStorage.setItem('drive_last_sync',ts);
-    document.getElementById('drive-last-sync').textContent='Ruajtur: '+ts;
+    document.getElementById('drive-last-sync').textContent='Sinkronizuar: '+ts;
     setDriveStatus('cloud-check','I sinkronizuar ✓ — '+ts,'#D1FAE5','#065F46');
-    toast('Ruajtur në Drive!','ti-cloud-upload');
+    toast('Ruajtur në Drive!'+mergedNote,'ti-cloud-upload');
   }catch(ex){setDriveStatus('cloud-x','Gabim: '+ex.message,'#FEE2E2','#991B1B');toast('Dështoi: '+ex.message,'ti-alert-circle',true);}
 }
 async function driveDownload(){
@@ -1009,24 +1057,14 @@ async function driveDownload(){
     let parsed;
     try{parsed=JSON.parse(rawText);}
     catch(pe){throw new Error('JSON i pavlefshëm: '+pe.message);}
-    let changed=false;
-
-    const importedDb = parsed.db || parsed.data || parsed.backup || null;
-    if(importedDb && typeof importedDb==='object'){
-      const fixedDb={};
-      Object.keys(importedDb).forEach(k=>{
-        fixedDb[String(k)] = Array.isArray(importedDb[k]) ? importedDb[k] : [];
-      });
-      db=makeDbProxy(fixedDb);
-      persist();
-      changed=true;
-    }
-
-    if(Array.isArray(parsed.hives)){
-      saveHives(parsed.hives);
-      changed=true;
-    }
-    if(!changed){throw new Error('Skedari nuk ka të dhëna të njohura');}
+    const remoteDb=(parsed.db&&typeof parsed.db==='object'&&!Array.isArray(parsed.db))?normDb(parsed.db):{};
+    const remoteHives=Array.isArray(parsed.hives)?parsed.hives:[];
+    if(!Object.keys(remoteDb).length&&!remoteHives.length){throw new Error('Skedari nuk ka të dhëna të njohura');}
+    const before=totalCount();
+    db=makeDbProxy(mergeDb(normDb(db),remoteDb));
+    saveHives(mergeHives(getHives(),remoteHives));
+    persist();
+    const added=totalCount()-before;
     buildGrid('grid-add',selectAdd);
     buildGrid('grid-view',selectView);
     updateStats();
@@ -1034,7 +1072,7 @@ async function driveDownload(){
     localStorage.setItem('drive_last_sync',ts);
     document.getElementById('drive-last-sync').textContent='Marrë: '+ts;
     setDriveStatus('cloud-check','I sinkronizuar ✓ — '+ts,'#D1FAE5','#065F46');
-    toast('Të dhënat u morën nga Drive!','ti-cloud-download');
+    toast(added>0?('U morën '+added+' shënime të reja nga Drive!'):'Të dhënat janë tashmë të përditësuara.','ti-cloud-download');
   }catch(ex){setDriveStatus('cloud-x','Gabim: '+ex.message,'#FEE2E2','#991B1B');toast('Dështoi: '+ex.message,'ti-alert-circle',true);}
 }
 function driveAutoSync(){
