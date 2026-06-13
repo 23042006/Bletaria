@@ -63,6 +63,13 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .hex-btn:active{transform:scale(0.93)}
 .hex-btn.has-data{border-color:var(--amber);color:var(--amber-dark);background:var(--amber-light)}
 [data-theme="dark"] .hex-btn.has-data{color:var(--amber)}
+.hex-btn.queen-colored{background:var(--qbg)!important;border-color:var(--qborder)!important;color:var(--qtext)!important}
+.hex-btn.queen-colored .dot{background:var(--qborder)!important}
+.queen-legend{margin-bottom:14px;padding:10px 12px;background:var(--bg2);border:1.5px solid var(--border1);border-radius:10px}
+.queen-legend-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.queen-legend-items{display:flex;flex-wrap:wrap;gap:5px}
+.queen-legend-item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;border:2px solid transparent}
+.queen-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
 .dot{width:6px;height:6px;background:var(--amber);border-radius:50%;position:absolute;top:5px;right:5px}
 .hex-btn.hidden-cell{display:none}
 .sel-bar{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--amber-dark);display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -206,14 +213,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="search-clear" onclick="clearSearch('search-add','grid-add')" style="display:none" id="clr-add"><i class="ti ti-x"></i></button>
       </div>
       <div class="hive-grid" id="grid-add"></div>
-      <div id="queen-legend" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
-        <span style="color:var(--text2);font-weight:600;width:100%;margin-bottom:2px"><i class="ti ti-crown" style="font-size:12px"></i> Ngjyra e mbretëreshës:</span>
-        <span style="background:#E5E7EB;border:1.5px solid #6B7280;color:#111827;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E bardhë — 2021/2026</span>
-        <span style="background:#FDE047;border:1.5px solid #CA8A04;color:#713F12;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E verdhë — 2022/2027</span>
-        <span style="background:#FCA5A5;border:1.5px solid #DC2626;color:#7F1D1D;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E kuqe — 2023/2028</span>
-        <span style="background:#6EE7B7;border:1.5px solid #059669;color:#064E3B;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Jeshile — 2024/2029</span>
-        <span style="background:#93C5FD;border:1.5px solid #1D4ED8;color:#1e3a8a;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Blu — 2025/2030</span>
-      </div>
+      <div class="queen-legend" id="queen-legend-add"></div>
     </div>
     <div id="form-add" style="display:none">
       <div class="sel-bar">
@@ -289,14 +289,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
         <button class="search-clear" onclick="clearSearch('search-view','grid-view')" style="display:none" id="clr-view"><i class="ti ti-x"></i></button>
       </div>
       <div class="hive-grid" id="grid-view"></div>
-      <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
-        <span style="color:var(--text2);font-weight:600;width:100%;margin-bottom:2px"><i class="ti ti-crown" style="font-size:12px"></i> Ngjyra e mbretëreshës:</span>
-        <span style="background:#E5E7EB;border:1.5px solid #6B7280;color:#111827;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E bardhë — 2021/2026</span>
-        <span style="background:#FDE047;border:1.5px solid #CA8A04;color:#713F12;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E verdhë — 2022/2027</span>
-        <span style="background:#FCA5A5;border:1.5px solid #DC2626;color:#7F1D1D;padding:3px 9px;border-radius:20px;font-weight:600">⬤ E kuqe — 2023/2028</span>
-        <span style="background:#6EE7B7;border:1.5px solid #059669;color:#064E3B;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Jeshile — 2024/2029</span>
-        <span style="background:#93C5FD;border:1.5px solid #1D4ED8;color:#1e3a8a;padding:3px 9px;border-radius:20px;font-weight:600">⬤ Blu — 2025/2030</span>
-      </div>
+      <div class="queen-legend" id="queen-legend-view"></div>
     </div>
     <div id="view-area" style="display:none"></div>
   </div>
@@ -555,13 +548,11 @@ function buildGrid(id,onClick){
       // Ngjyra sipas vitit të mbretëreshës
       const qc=getQueenYearColor(i);
       if(qc){
-        b.style.background=qc.color.bg;
-        b.style.borderColor=qc.color.border;
-        b.style.color=qc.color.text;
+        b.classList.add('queen-colored');
+        b.style.setProperty('--qbg', qc.color.bg);
+        b.style.setProperty('--qborder', qc.color.border);
+        b.style.setProperty('--qtext', qc.color.text);
         b.title='Mbretëresha '+qc.year+' — '+qc.color.label;
-        // Dot i ngjyrës së mbretëreshës
-        const dot=b.querySelector('.dot');
-        if(dot) dot.style.background=qc.color.border;
       }
       b.onclick=(function(hn){return function(){onClick(hn);};})(i);
     }
@@ -1092,9 +1083,33 @@ function toast(msg,icon,err){
   clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},2600);
 }
 
+function buildQueenLegend(){
+  const ITEMS=[
+    {bg:'#E5E7EB',border:'#6B7280',text:'#111827',label:'E bardhë',years:'2021/2026'},
+    {bg:'#FDE047',border:'#CA8A04',text:'#713F12',label:'E verdhë',years:'2022/2027'},
+    {bg:'#FCA5A5',border:'#DC2626',text:'#7F1D1D',label:'E kuqe',years:'2023/2028'},
+    {bg:'#6EE7B7',border:'#059669',text:'#064E3B',label:'Jeshile',years:'2024/2029'},
+    {bg:'#93C5FD',border:'#1D4ED8',text:'#1e3a8a',label:'Blu',years:'2025/2030'},
+  ];
+  const html='<div class="queen-legend-title"><i class="ti ti-crown"></i> Ngjyra e mbretëreshës:</div>'
+    +'<div class="queen-legend-items">'
+    +ITEMS.map(function(c){
+      return '<span class="queen-legend-item" style="background:'+c.bg+';border-color:'+c.border+';color:'+c.text+'">'
+        +'<span class="queen-legend-dot" style="background:'+c.border+'"></span>'
+        +c.label+' <span style="opacity:0.7;font-size:11px">'+c.years+'</span>'
+        +'</span>';
+    }).join('')
+    +'</div>';
+  ['queen-legend-add','queen-legend-view'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=html;
+  });
+}
+
 // ─── INIT ────────────────────────────────────────────────
 load();initTheme();
 buildGrid('grid-add',selectAdd);buildGrid('grid-view',selectView);updateStats();
+buildQueenLegend();
 // Provojmë rilidhjën automatike me Drive pa shfaqur dialog
 setTimeout(tryAutoReconnectDrive, 1500);
 
