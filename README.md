@@ -1,2 +1,0 @@
-# Bletaria
-Shenime per bletet
