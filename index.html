@@ -293,7 +293,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
   </div>
 
   <div id="screen-drive" class="screen">
-    <div class="action-card"><div class="action-card-title"><i class="ti ti-brand-google-drive"></i>Google Drive Sinkronizim</div><p>Ruaj të dhënat në Google Drive dhe sinkronizo ndërmjet pajisjeve.</p><div id="drive-status-bar" class="drive-status-bar" style="background:var(--bg3);color:var(--text2)"><i class="ti ti-cloud-off" style="font-size:18px"></i><span id="drive-status-txt">Jo i lidhur</span></div><div class="btn-row"><button class="btn-action btn-primary" id="btn-drive-connect" onclick="initDrive()"><i class="ti ti-link"></i>Lidhu me Drive</button><button class="btn-action btn-secondary" id="btn-drive-upload" onclick="driveUpload()" style="display:none"><i class="ti ti-cloud-upload"></i>Ruaj tani</button><button class="btn-action btn-secondary" id="btn-drive-download" onclick="driveDownload()" style="display:none"><i class="ti ti-cloud-download"></i>Merr nga Drive</button><button class="btn-action btn-danger" id="btn-drive-disconnect" onclick="disconnectDrive()" style="display:none"><i class="ti ti-unlink"></i>Shkëput</button></div><div style="margin-top:8px;font-size:12px;color:var(--text3)" id="drive-last-sync"></div></div>
+    <div class="action-card"><div class="action-card-title"><i class="ti ti-brand-google-drive"></i>Google Drive Sinkronizim</div><p>Ruaj të dhënat në Google Drive dhe sinkronizo ndërmjet pajisjeve.</p><div id="drive-status-bar" class="drive-status-bar" style="background:var(--bg3);color:var(--text2)"><i class="ti ti-cloud-off" style="font-size:18px"></i><span id="drive-status-txt">Jo i lidhur</span></div><div class="btn-row"><button class="btn-action btn-primary" id="btn-drive-connect" onclick="initDrive()"><i class="ti ti-link"></i>Lidhu me Drive</button><button class="btn-action btn-secondary" id="btn-drive-upload" onclick="driveUpload()" style="display:none"><i class="ti ti-cloud-upload"></i>Ruaj tani</button><button class="btn-action btn-secondary" id="btn-drive-download" onclick="driveDownload()" style="display:none"><i class="ti ti-cloud-download"></i>Merr nga Drive</button><button class="btn-action btn-secondary" id="btn-drive-diag" onclick="driveDiagnose()" style="display:none"><i class="ti ti-stethoscope"></i>Diagnostiko</button><button class="btn-action btn-danger" id="btn-drive-disconnect" onclick="disconnectDrive()" style="display:none"><i class="ti ti-unlink"></i>Shkëput</button></div><div style="margin-top:8px;font-size:12px;color:var(--text3)" id="drive-last-sync"></div></div>
     <div class="action-card"><div class="action-card-title"><i class="ti ti-info-circle"></i>Si funksionon</div><p style="line-height:1.7">1. Kliko <strong>Lidhu me Drive</strong> — hapet llogaria Google<br>2. Kliko <strong>Ruaj tani</strong> — bashkon dhe ruan në Drive (nuk fshin asgjë)<br>3. Nga pajisja tjetër: Lidhu → <strong>Merr nga Drive</strong> — sjell shënimet e reja pa fshirë ato lokale<br><br>Sinkronizimi bashkon (merge) shënimet nga të dyja pajisjet — asnjë shënim nuk fshihet automatikisht. Të dhënat ruhen si skedar <code>bletaria_sync.json</code> në Drive tuaj.</p></div>
     <div class="action-card"><div class="action-card-title"><i class="ti ti-device-mobile"></i>Instalo si App (PWA)</div><p>Shto aplikacionin në ekranin kryesor të telefonit.</p><div class="btn-row"><button class="btn-action btn-secondary" id="pwa-install-btn" onclick="promptPWA()" style="display:none"><i class="ti ti-download"></i>Instalo App</button><span id="pwa-note" style="font-size:13px;color:var(--text2)">Hap në Chrome mobile → menu → "Shto në ekranin kryesor".</span></div></div>
   </div>
@@ -304,6 +304,8 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 <div class="modal-overlay" id="modal-hives"><div class="modal"><div class="modal-title"><span><i class="ti ti-settings" style="color:var(--amber);margin-right:6px"></i>Menaxho koshere</span><button class="modal-close" onclick="closeModal('modal-hives')"><i class="ti ti-x"></i></button></div><div class="label">Shto koshere të re</div><div class="add-hive-row" style="margin-bottom:16px"><input type="number" class="add-hive-input" id="new-hive-from" placeholder="Nga nr..." min="1" max="999"><span style="color:var(--text2);font-size:13px">deri</span><input type="number" class="add-hive-input" id="new-hive-to" placeholder="Deri nr..." min="1" max="999"><button class="btn-add-hive" onclick="addHiveRange()"><i class="ti ti-plus"></i>Shto</button></div><div class="label">Koshere aktuale (<span id="hive-total-lbl">0</span>)</div><div class="hive-list" id="hive-list"></div><div id="hive-empty" class="empty" style="display:none"><i class="ti ti-hexagon-off"></i>Nuk ka koshere të shtuara</div></div></div>
 
 <div class="modal-overlay" id="modal-edit"><div class="modal"><div class="modal-title"><span id="edit-modal-title"><i class="ti ti-pencil" style="color:var(--amber);margin-right:6px"></i>Ndrysho shënimin</span><button class="modal-close" onclick="closeModal('modal-edit')"><i class="ti ti-x"></i></button></div><input type="hidden" id="edit-entry-cat"><div id="edit-modal-fields" style="margin-bottom:12px"></div><div class="btn-row"><button class="btn-action btn-primary" onclick="saveEditEntry()" style="flex:1;justify-content:center"><i class="ti ti-device-floppy"></i>Ruaj ndryshimet</button><button class="btn-action btn-secondary" onclick="closeModal('modal-edit')"><i class="ti ti-x"></i>Anulo</button></div></div></div>
+
+<div class="modal-overlay" id="modal-diag"><div class="modal"><div class="modal-title"><span><i class="ti ti-stethoscope" style="color:var(--amber);margin-right:6px"></i>Diagnostiko Drive</span><button class="modal-close" onclick="closeModal('modal-diag')"><i class="ti ti-x"></i></button></div><p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">Kjo tregon çdo skedar <code>bletaria_sync.json</code> që app-i gjen në Drive-in tënd, me përmbajtjen e tij. Nëse shfaqen <strong>më shumë se 1 skedar</strong>, kjo është arsyeja e konfuzionit — fshi skedarët e gabuar nga këtu.</p><div id="diag-list"></div></div></div>
 
 <div class="toast" id="toast"><i class="ti ti-check" id="toast-icon"></i><span id="toast-msg"></span></div>
 
@@ -948,6 +950,7 @@ function onDriveConnected(accessToken){
   document.getElementById('btn-drive-connect').style.display='none';
   document.getElementById('btn-drive-upload').style.display='inline-flex';
   document.getElementById('btn-drive-download').style.display='inline-flex';
+  document.getElementById('btn-drive-diag').style.display='inline-flex';
   document.getElementById('btn-drive-disconnect').style.display='inline-flex';
   setDriveStatus('cloud-check','I lidhur me Google Drive ✓','#D1FAE5','#065F46');
   toast('Drive u lidh!','ti-brand-google-drive');
@@ -958,6 +961,7 @@ function disconnectDrive(){
   document.getElementById('btn-drive-connect').style.display='inline-flex';
   document.getElementById('btn-drive-upload').style.display='none';
   document.getElementById('btn-drive-download').style.display='none';
+  document.getElementById('btn-drive-diag').style.display='none';
   document.getElementById('btn-drive-disconnect').style.display='none';
   setDriveStatus('cloud-off','Jo i lidhur me Drive','#F3F4F6','#6b7280');
   toast('U shkëput nga Drive','ti-unlink');
@@ -1077,6 +1081,70 @@ async function driveDownload(){
 }
 function driveAutoSync(){
   if(driveAccessToken) driveUpload();
+}
+
+// Liston të gjithë skedarët "bletaria_sync.json" që gjenden në Drive, me përmbledhje
+// të përmbajtjes së secilit — ndihmon të identifikohen kopje (duplicate) të humbura/të vjetra.
+async function driveDiagnose(){
+  if(!driveAccessToken){toast('Lidhu me Drive fillimisht','ti-alert-circle',true);return;}
+  const list=document.getElementById('diag-list');
+  list.innerHTML='<div class="empty"><i class="ti ti-loader-2"></i>Duke kontrolluar Drive...</div>';
+  document.getElementById('modal-diag').classList.add('open');
+  try{
+    const q=await fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'"+DRIVE_FILE_NAME+"'%20and%20trashed%3Dfalse&fields=files(id,name,modifiedTime,size)&orderBy=modifiedTime%20desc",{headers:{Authorization:'Bearer '+driveAccessToken}});
+    if(!q.ok) throw new Error('Kërkimi dështoi: '+q.status);
+    const qd=await q.json();
+    const files=qd.files||[];
+    if(!files.length){list.innerHTML='<div class="empty"><i class="ti ti-cloud-off"></i>Nuk u gjet asnjë skedar "'+DRIVE_FILE_NAME+'" në Drive</div>';return;}
+    const items=[];
+    for(const f of files){
+      const info={dbKeys:0,notes:0,hivesLen:0,err:null};
+      try{
+        const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{Authorization:'Bearer '+driveAccessToken}});
+        if(r.ok){
+          const txt=await r.text();
+          const j=JSON.parse(txt);
+          const db2=(j.db&&typeof j.db==='object'&&!Array.isArray(j.db))?j.db:{};
+          info.dbKeys=Object.keys(db2).filter(k=>Array.isArray(db2[k])&&db2[k].length).length;
+          info.notes=Object.values(db2).reduce((a,v)=>a+(Array.isArray(v)?v.length:0),0);
+          info.hivesLen=Array.isArray(j.hives)?j.hives.length:0;
+        } else info.err='HTTP '+r.status;
+      }catch(e){info.err=e.message;}
+      items.push({f,info});
+    }
+    renderDiagList(items);
+  }catch(ex){list.innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i>Gabim: '+esc(ex.message)+'</div>';}
+}
+function renderDiagList(items){
+  const list=document.getElementById('diag-list');
+  if(items.length>1){
+    list.innerHTML='<div class="drive-status-bar" style="background:#FEE2E2;color:#991B1B;margin-bottom:10px"><i class="ti ti-alert-triangle" style="font-size:18px"></i><span>U gjetën '+items.length+' skedarë me të njëjtin emër! Ky është shkaku i ngatërrimit. Fshi ata që NUK janë "më i ri" / kanë pak të dhëna, mbaj vetëm njërin.</span></div>'
+      +list.innerHTML;
+  }
+  list.innerHTML+=items.map((it,idx)=>{
+    const f=it.f, info=it.info;
+    const mod=f.modifiedTime?new Date(f.modifiedTime).toLocaleString():'?';
+    let body;
+    if(info.err) body='<span style="color:#991B1B">Gabim leximi: '+esc(info.err)+'</span>';
+    else body='Koshere me shënime: <strong>'+info.dbKeys+'</strong> · Total shënime: <strong>'+info.notes+'</strong> · Lista e koshereve: <strong>'+info.hivesLen+'</strong>';
+    return '<div class="hive-item" style="align-items:flex-start;flex-direction:column;gap:6px">'
+      +'<div style="display:flex;justify-content:space-between;width:100%;align-items:center">'
+      +'<div class="hive-item-info"><strong>Skedari #'+(idx+1)+(idx===0?' (i ndryshuar së fundi)':'')+'</strong>'+mod+(f.size?(' · '+f.size+' bytes'):'')+'</div>'
+      +'<button class="btn-hive-del" onclick="driveDeleteFile(\''+f.id+'\')"><i class="ti ti-trash"></i></button>'
+      +'</div>'
+      +'<div style="font-size:13px;color:var(--text2)">'+body+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);word-break:break-all">ID: '+f.id+'</div>'
+      +'</div>';
+  }).join('');
+}
+async function driveDeleteFile(fileId){
+  if(!confirm('Fshi këtë skedar nga Drive? Ky veprim nuk kthehet!'))return;
+  try{
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId,{method:'DELETE',headers:{Authorization:'Bearer '+driveAccessToken}});
+    if(!r.ok&&r.status!==404) throw new Error('Fshirja dështoi: '+r.status);
+    toast('Skedari u fshi nga Drive','ti-trash');
+    driveDiagnose();
+  }catch(ex){toast('Dështoi: '+ex.message,'ti-alert-circle',true);}
 }
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('pwa-install-btn').style.display='flex';document.getElementById('pwa-note').style.display='none';});
