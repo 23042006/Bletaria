@@ -296,6 +296,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
     <div class="action-card"><div class="action-card-title"><i class="ti ti-brand-google-drive"></i>Google Drive Sinkronizim</div><p>Ruaj të dhënat në Google Drive dhe sinkronizo ndërmjet pajisjeve.</p><div id="drive-status-bar" class="drive-status-bar" style="background:var(--bg3);color:var(--text2)"><i class="ti ti-cloud-off" style="font-size:18px"></i><span id="drive-status-txt">Jo i lidhur</span></div><div class="btn-row"><button class="btn-action btn-primary" id="btn-drive-connect" onclick="initDrive()"><i class="ti ti-link"></i>Lidhu me Drive</button><button class="btn-action btn-secondary" id="btn-drive-upload" onclick="driveUpload()" style="display:none"><i class="ti ti-cloud-upload"></i>Ruaj tani</button><button class="btn-action btn-secondary" id="btn-drive-download" onclick="driveDownload()" style="display:none"><i class="ti ti-cloud-download"></i>Merr nga Drive</button><button class="btn-action btn-danger" id="btn-drive-disconnect" onclick="disconnectDrive()" style="display:none"><i class="ti ti-unlink"></i>Shkëput</button></div><div style="margin-top:8px;font-size:12px;color:var(--text3)" id="drive-last-sync"></div></div>
     <div class="action-card"><div class="action-card-title"><i class="ti ti-info-circle"></i>Si funksionon</div><p style="line-height:1.7">1. Kliko <strong>Lidhu me Drive</strong> — hapet llogaria Google<br>2. Kliko <strong>Ruaj tani</strong> — ruhet në Drive<br>3. Nga pajisja tjetër: Lidhu → <strong>Merr nga Drive</strong><br><br>Të dhënat ruhen si skedar <code>bletaria_sync.json</code> në Drive tuaj.</p></div>
     <div class="action-card"><div class="action-card-title"><i class="ti ti-device-mobile"></i>Instalo si App (PWA)</div><p>Shto aplikacionin në ekranin kryesor të telefonit.</p><div class="btn-row"><button class="btn-action btn-secondary" id="pwa-install-btn" onclick="promptPWA()" style="display:none"><i class="ti ti-download"></i>Instalo App</button><span id="pwa-note" style="font-size:13px;color:var(--text2)">Hap në Chrome mobile → menu → "Shto në ekranin kryesor".</span></div></div>
+    <div class="action-card"><div class="action-card-title"><i class="ti ti-refresh-alert"></i>Përditëso App-in</div><p>Nëse app-i nuk shfaq versionin e fundit (sidomos në Chrome/Android pas një instalimi të vjetër), shtyp këtu për të pastruar cache-n e brendshme dhe rifreskuar.</p><div class="btn-row"><button class="btn-action btn-secondary" onclick="forceAppUpdate()"><i class="ti ti-refresh"></i>Pastro cache &amp; Rifresko</button></div><div style="margin-top:6px;font-size:12px;color:var(--text3)">Nëse kjo nuk funksionon në Chrome: çinstalo app-in nga ekrani kryesor dhe shtoje sërish.</div></div>
   </div>
 </div>
 
@@ -894,6 +895,27 @@ function clearAll(){
   toast('Të dhënat u fshinë.','ti-trash');
 }
 function today(){return new Date().toISOString().split('T')[0];}
+
+// ─── PËRDITËSIM I DETYRUAR (RAST KUR CHROME/PWA NUK PËRDITËSOHET) ─
+// Çregjistron Service Worker-in, fshin të gjitha Cache Storage-t e
+// origjinës, dhe rifreskon faqen duke detyruar marrjen e versionit
+// të fundit nga rrjeti.
+async function forceAppUpdate(){
+  toast('Duke pastruar cache...','ti-refresh');
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){await r.unregister();}
+    }
+    if('caches' in window){
+      const keys=await caches.keys();
+      for(const k of keys){await caches.delete(k);}
+    }
+  }catch(e){}
+  // Rifreskim i detyruar — URL me parametër kohor anashkalon HTTP cache.
+  // (Parametri hiqet automatikisht në ngarkim, që të mos prishë OAuth redirect_uri.)
+  window.location.replace(window.location.pathname+'?_fresh='+Date.now());
+}
 function dlBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 
 const DRIVE_FILE_NAME='bletaria_sync.json';
@@ -1153,6 +1175,12 @@ function buildQueenLegend(){
     +ITEMS.map(c=>'<span class="queen-legend-item" style="background:'+c.bg+';border-color:'+c.border+';color:'+c.text+'"><span class="queen-legend-dot" style="background:'+c.border+'"></span>'+c.label+' <span style="opacity:0.7;font-size:11px">'+c.years+'</span></span>').join('')
     +'</div>';
   ['queen-legend-add','queen-legend-view'].forEach(id=>{const el=document.getElementById(id);if(el) el.innerHTML=html;});
+}
+
+// Nëse erdhëm këtu nga "Pastro cache & Rifresko", hiqe parametrin nga URL
+// (që të mos prishë redirect_uri të OAuth-it në lidhjet me Drive)
+if(window.location.search.indexOf('_fresh=')!==-1){
+  history.replaceState(null,'',window.location.pathname+window.location.hash);
 }
 
 handleDriveRedirect();
