@@ -65,6 +65,9 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .hex-btn.has-data{border-color:var(--amber);color:var(--amber-dark);background:var(--amber-light)}
 [data-theme="dark"] .hex-btn.has-data{color:var(--amber)}
 .dot{width:6px;height:6px;background:var(--amber);border-radius:50%;position:absolute;top:5px;right:5px}
+.depo-badge{position:absolute;top:2px;left:2px;background:#1f2937;color:#fff;font-size:8px;font-weight:800;line-height:1;padding:1.5px 3px;border-radius:5px;display:flex;align-items:center;gap:1px;pointer-events:none;box-shadow:0 1px 2px rgba(0,0,0,0.25)}
+.depo-badge i{font-size:8px}
+[data-theme="dark"] .depo-badge{background:#FDE047;color:#1f2937}
 .hex-btn.hidden-cell{display:none}
 .sel-bar{background:var(--amber-light);border:1.5px solid var(--amber);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--amber-dark);display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 [data-theme="dark"] .sel-bar{color:var(--amber)}
@@ -280,6 +283,7 @@ body{background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div class="stat-card"><div class="stat-num" id="st-traj">0</div><div class="stat-label">Trajtime</div></div>
       <div class="stat-card"><div class="stat-num" id="st-queen">0</div><div class="stat-label">Mbretëresha</div></div>
       <div class="stat-card"><div class="stat-num" id="st-mjalti" style="font-size:20px">0 kg</div><div class="stat-label">Mjalti i mjelur</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-depo">0</div><div class="stat-label">Depo të vendosura</div></div>
     </div>
     <div class="label">Koshere me më shumë aktivitet</div>
     <div id="stat-list"></div>
@@ -379,6 +383,18 @@ function getQueenYearColor(hiveNum){
   return {color:QUEEN_COLORS[yr%5], year:yr};
 }
 
+// Numri aktual i depove për një koshere = (depo të vendosura) - (depo të hequra)
+function getDepoCount(hiveNum){
+  const entries=db[hiveNum]||[];
+  let n=0;
+  entries.forEach(e=>{
+    if(e.cat!=='mjalti')return;
+    if(e.veprimi==='shto-depo')n+=parseInt(e.depNr)||0;
+    else if(e.veprimi==='heq-depo')n-=parseInt(e.heqNr)||0;
+  });
+  return Math.max(0,n);
+}
+
 let deleteMode=false;
 function toggleDeleteMode(){
   deleteMode=!deleteMode;
@@ -440,6 +456,16 @@ function buildGrid(id,onClick){
         b.title='Mbretëresha '+qc.year+' — '+qc.color.label;
         const dot=b.querySelector('.dot');
         if(dot) dot.style.backgroundColor=qc.color.border;
+      }
+      
+      // Shenjë dalluese për depo aktive — pavarësisht ngjyrës së mbretëreshës
+      const depoCount=getDepoCount(i);
+      if(depoCount>0){
+        const badge=document.createElement('span');
+        badge.className='depo-badge';
+        badge.innerHTML='<i class="ti ti-box"></i>'+depoCount;
+        b.appendChild(badge);
+        b.title=(b.title?b.title+' · ':'')+depoCount+' depo';
       }
       
       b.onclick=(hn=>()=>onClick(hn))(i);
@@ -715,10 +741,13 @@ function updateStats(){
   const traj=all.reduce((a,kv)=>a+(kv[1]?kv[1].filter(e=>e.cat==='trajtime').length:0),0);
   const queen=all.reduce((a,kv)=>a+(kv[1]?kv[1].filter(e=>e.cat==='mbreteresha').length:0),0);
   const mjaltiKg=all.reduce((a,kv)=>a+(kv[1]?kv[1].filter(e=>e.cat==='mjalti'&&e.veprimi==='mjelje'&&e.sasia).reduce((s,e)=>s+parseFloat(e.sasia||0),0):0),0);
+  const depoTotal=getHives().reduce((a,n)=>a+getDepoCount(n),0);
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-hives').textContent=active;
   document.getElementById('st-traj').textContent=traj;
   document.getElementById('st-queen').textContent=queen;
+  const stDepoEl=document.getElementById('st-depo');
+  if(stDepoEl) stDepoEl.textContent=depoTotal;
   const mjEl=document.getElementById('st-mjalti');
   if(mjEl) mjEl.textContent=mjaltiKg.toFixed(1)+' kg';
   const sorted=all.filter(kv=>kv[1]&&kv[1].length).sort((a,b)=>b[1].length-a[1].length).slice(0,10);
@@ -1173,7 +1202,8 @@ function buildQueenLegend(){
   const html='<div class="queen-legend-title"><i class="ti ti-crown"></i> Ngjyra e mbretëreshës:</div>'
     +'<div class="queen-legend-items">'
     +ITEMS.map(c=>'<span class="queen-legend-item" style="background:'+c.bg+';border-color:'+c.border+';color:'+c.text+'"><span class="queen-legend-dot" style="background:'+c.border+'"></span>'+c.label+' <span style="opacity:0.7;font-size:11px">'+c.years+'</span></span>').join('')
-    +'</div>';
+    +'</div>'
+    +'<div class="queen-legend-title" style="margin-top:10px"><span class="depo-badge" style="position:static;display:inline-flex"><i class="ti ti-box"></i>N</span> = numri i depove aktive në koshere</div>';
   ['queen-legend-add','queen-legend-view'].forEach(id=>{const el=document.getElementById(id);if(el) el.innerHTML=html;});
 }
 
